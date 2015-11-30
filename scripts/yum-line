@@ -1,0 +1,28 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use v5.10.0;
+
+use Yum::Line;
+
+my $line = Yum::Line->new_with_options;
+
+my $command = shift;
+
+if ($command eq 'list') {
+	my $name = shift;
+
+	printf '%-50s %-15s %-15s %-10s'."\n", qw(Name Version Release Arch);
+	foreach my $package ($line->upstream($name)->packages) {
+		printf '%-50s %-15s %-15s %-10s'."\n",
+			$package->name,
+			$package->version,
+			$package->release,
+			$package->arch;
+	}
+} elsif ($command eq 'rsync') {
+	foreach my $name ($line->upstreams) {
+		print "Synchronising upstream $name\n";
+		$line->upstream($name)->rsync;
+	}
+}

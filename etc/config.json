@@ -1,0 +1,37 @@
+{
+	"directory": "/home/mstudd/tmp/repo",
+	"os": {
+		"version": "6",
+		"test": "6.7",
+		"rc": "6.7",
+		"prod": "6.7",
+		"repositories": [ "os", "updates" ],
+		"sync": "mirrors.rit.edu::centos/$rel/$repo/$arch"
+	},
+	"trains": [
+		{
+			"name": "base",
+			"os": true,
+			"upstream": [ "updates" ]
+		},
+		{
+			"name": "third-party",
+			"upstream": [ "epel", "pgrpm-92" ]
+		},
+		{
+			"name": "local",
+			"upstream": [ "recognia" ]
+		}
+	],
+	"upstream": [
+		{
+			"name": "epel",
+			"sync": "mirrors.mit.edu::fedora-epel/$rel/$arch",
+			"restrict": [ "FIXME" ]
+		},
+		{
+			"name": "pgrpm-92",
+			"sync": "yum.postgresql.org::$repo/redhat/rhel-$rel-$arch"
+		}
+	]
+}

@@ -1,8 +1,111 @@
 package Yum::Line;
+use v5.10.0;
 
-use strict;
-use 5.008_005;
+use JSON::XS qw(decode_json);
+use Yum::Line::Repo;
+use Yum::Line::Train;
+
+use Moo;
+use strictures 2;
+use namespace::clean;
+
+# Keep these in namespace
+use MooX::Options  protect_argv => 0;
+
 our $VERSION = '0.01';
+
+option config_file => (
+	is      => 'ro',
+	format  => 's',
+	default => './etc/config.json',
+);
+
+has _config => (
+	is      => 'ro',
+	lazy    => 1,
+	builder => '_build_config',
+);
+
+has _trains => (
+	is      => 'ro',
+	lazy    => 1,
+	builder => '_build_trains',
+);
+
+has _upstream => (
+	is      => 'ro',
+	lazy    => 1,
+	builder => '_build_upstream',
+);
+
+sub _build_config {
+	my $self = shift;
+	return $self->_read_json_file($self->config_file);
+}
+
+sub _build_trains {
+	my $self = shift;
+	my $config = $self->_config;
+	my %trains;
+	foreach my $t (@{ $config->{trains} }) {
+		$trains{$t->{name}} = Yum::Line::Train->new(
+			base => $config->{directory},
+			%$t,
+			_upstream => [ map $self->_upstream->{$_},
+					@{ $t->{upstream} } ],
+		);
+	}
+	return \%trains;
+}
+
+sub _build_upstream {
+	my $self = shift;
+	my $config = $self->_config;
+	my %upstream;
+	foreach my $u (@{ $config->{upstream} }) {
+		$upstream{$u->{name}} = Yum::Line::Repo->new(
+			base => $config->{directory},
+			arch => 'x86_64',
+			rel  => 6,
+			%$u,
+		);
+	}
+	return \%upstream;
+}
+
+sub _read_json_file {
+	my ($self, $file) = @_;
+
+	local $/;
+	open( my $fh, '<:encoding(UTF-8)', $file );
+	my $json_text = <$fh>;
+	close ($fh);
+	return decode_json($json_text);
+}
+
+sub train {
+	my ($self, $name) = @_;
+
+	return $self->_trains->{$name};
+}
+
+sub trains {
+	my $self = shift;
+
+	return sort keys %{ $self->_trains };
+}
+
+sub upstream {
+	my ($self, $name) = @_;
+
+	return $self->_upstream->{$name};
+}
+
+sub upstreams {
+	my $self = shift;
+
+	return sort keys %{ $self->_upstream };
+}
 
 1;
 __END__
