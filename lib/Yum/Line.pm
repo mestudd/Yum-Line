@@ -2,6 +2,7 @@ package Yum::Line;
 use v5.10.0;
 
 use JSON::XS qw(decode_json);
+use Yum::Line::Base;
 use Yum::Line::Repo;
 use Yum::Line::Train;
 
@@ -18,6 +19,12 @@ option config_file => (
 	is      => 'ro',
 	format  => 's',
 	default => './etc/config.json',
+);
+
+has base => (
+	is      => 'ro',
+	lazy    => 1,
+	builder => '_build_base',
 );
 
 has _config => (
@@ -38,6 +45,15 @@ has _upstream => (
 	builder => '_build_upstream',
 );
 
+sub _build_base {
+	my $self = shift;
+	my $config = $self->_config;
+	return Yum::Line::Base->new(
+		base => $config->{directory},
+		%{ $config->{base} },
+	);
+}
+
 sub _build_config {
 	my $self = shift;
 	return $self->_read_json_file($self->config_file);
@@ -51,8 +67,8 @@ sub _build_trains {
 		$trains{$t->{name}} = Yum::Line::Train->new(
 			base => $config->{directory},
 			%$t,
-			_upstream => [ map $self->_upstream->{$_},
-					@{ $t->{upstream} } ],
+			_upstream => { map +($_, $self->_upstream->{$_}),
+					@{ $t->{upstream} } },
 		);
 	}
 	return \%trains;
@@ -89,7 +105,7 @@ sub train {
 	return $self->_trains->{$name};
 }
 
-sub trains {
+sub train_names {
 	my $self = shift;
 
 	return sort keys %{ $self->_trains };
@@ -98,12 +114,14 @@ sub trains {
 sub upstream {
 	my ($self, $name) = @_;
 
+	return $self->_upstream->{$name} || $self->base->upstream($name);
 	return $self->_upstream->{$name};
 }
 
-sub upstreams {
+sub upstream_names {
 	my $self = shift;
 
+	return sort keys %{ $self->_upstream }, $self->base->upstream_names;
 	return sort keys %{ $self->_upstream };
 }
 

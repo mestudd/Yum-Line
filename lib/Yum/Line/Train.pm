@@ -15,16 +15,14 @@ has name => (
 	is => 'ro',
 );
 
-has os => (
-	is => 'ro',
-);
-
+# FIXME put repos in a role?
 has _repos => (
 	is      => 'ro',
 	lazy    => 1,
 	builder => '_build_repos',
 );
 
+# FIXME put upstream in a role
 has _upstream => (
 	is => 'ro',
 );
@@ -43,6 +41,18 @@ sub _build_repos {
 		);
 	}
 	return \@repos;
+}
+
+sub upstream {
+	my ($self, $name) = @_;
+
+	return $self->_upstream->{$name};
+}
+
+sub upstream_names {
+	my $self = shift;
+
+	return sort keys %{ $self->_upstream // {} };
 }
 
 1;

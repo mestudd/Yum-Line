@@ -21,6 +21,12 @@ has base => (
 	is => 'ro',
 );
 
+has directory => (
+	is      => 'ro',
+	lazy    => 1,
+	builder => '_build_directory',
+);
+
 has _packages => (
 	is      => 'rw',
 	lazy    => 1,
@@ -31,8 +37,9 @@ has rel => (
 	is => 'ro',
 );
 
-has restrict => (
-	is => 'ro',
+has _restrict => (
+	is       => 'ro',
+	init_arg => 'restrict',
 );
 
 has rsync_log => (
@@ -52,9 +59,8 @@ sub _build_packages {
 	return [ $self->_read_dir(Path::Class::Dir->new($self->directory)) ];
 }
 
-sub directory {
+sub _build_directory {
 	my $self = shift;
-
 	return sprintf('%s/%s/%s', $self->base, $self->name, $self->arch);
 }
 
@@ -76,6 +82,12 @@ sub _read_dir {
 	});
 
 	return @packages;
+}
+
+sub restrict {
+	my $self = shift;
+
+	return @{ $self->_restrict // [] };
 }
 
 sub rsync {
@@ -105,4 +117,16 @@ sub scan_repo {
 	$self->_packages([ $self->_read_dir(Path::Class::Dir->new($self->directory)) ]);
 }
 
+sub sync_subbed {
+	my $self = shift;
+
+	my $src = $self->sync;
+
+	# FIXME: clean this up some
+	$src =~ s/\$arch/$self->{arch}/g;
+	$src =~ s/\$rel/$self->{rel}/g;
+	$src =~ s/\$repo/$self->{name}/g;
+
+	return $src;
+}
 1;

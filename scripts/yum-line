@@ -25,4 +25,60 @@ if ($command eq 'list') {
 		print "Synchronising upstream $name\n";
 		$line->upstream($name)->rsync;
 	}
+} elsif ($command eq 'dump') {
+	use Data::Dumper;
+#$line->_upstream;
+#warn Dumper($line);
+	say 'Config file: ', $line->config_file;
+	say 'Base';
+#warn Dumper($line->base);
+	say_base($line->base);
+
+	say "\nUpstream Repositories";
+	foreach my $name ($line->upstream_names) {
+		say_repo($line->upstream($name));
+	}
+
+	say "\nTrain Repositories";
+	foreach my $name ($line->train_names) {
+		say_train($line->train($name));
+	}
+} else {
+	die "must pass command\n";
+}
+exit 0;
+
+
+sub say_base {
+	my $base = shift;
+
+	say '   Name ', $base->name;
+	say '   Base ', $base->base;
+	say '   Sync ', $base->sync;
+	say '   Version ', $base->version;
+	say '   Uses ', join (', ', @{ $base->_upstream_names });
+	say '   Train';
+	say "      $_->{name} $_->{version}" foreach ($base->train);
+}
+
+sub say_repo {
+	my $repo = shift;
+
+	say '   Name ', $repo->name;
+	say $repo->sync
+		? '      Sync '. $repo->sync_subbed
+		: '      Local';
+	say '      Directory ', $repo->directory;
+	say '      Arch ', $repo->arch;
+	say '      Rel ', $repo->rel;
+	say '      Only Packages ', join (', ', $repo->restrict)
+		if ($repo->restrict);
+}
+
+sub say_train {
+	my $train = shift;
+
+	say '   Name ', $train->name;
+	say '      Base ', $train->base;
+	say '      Uses ', join (', ', $train->upstream_names);
 }
