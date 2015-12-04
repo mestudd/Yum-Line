@@ -66,19 +66,42 @@ sub _build_upstream {
 		if (!$seen{ $v }) {
 			$seen{ $v } = 1;
 			$repos{"$_-$v"} = Yum::Line::Repo->new(
-					name => "$_-$v",
+					name => $_,
 					base => $self->base,
 					# FIXME: de-hardcode these
 					directory => $self->base ."/$_-$v/x86_64",
 					arch => 'x86_64',
 					rel  => $v,
-					sync => $self->sync,
+					$stream->{obsolete} ? () : (sync => $self->sync),
 				)
 			   	foreach ('os', @{ $self->_upstream_names });
 		}
 	}
 
 	return \%repos;
+}
+
+sub get_obsolete {
+	my $self = shift;
+
+	foreach my $name ($self->upstream_names) {
+		my $upstream = $self->upstream($name);
+		next if ($upstream->sync);
+
+		say "Upstream $name is obsolete";
+		my $src = sprintf 'http://vault.centos.org/%s/%s/%s',
+			$upstream->rel, $upstream->name, $upstream->arch;
+		my $dest = $upstream->directory;
+
+		# FIXME: all this needs cleaning up
+		my $cmd = "wget --progress=dot:mega --recursive --no-parent --relative --no-host-directories --cut-dirs=3 --no-clobber --directory-prefix=\"$dest/\" \"$src/\"";
+		warn $cmd;
+		my $log = `$cmd`;
+		$upstream->rsync_log($log);
+		$upstream->rsync_status($?);
+
+		print $log;
+	}
 }
 
 sub train {

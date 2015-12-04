@@ -93,17 +93,15 @@ sub restrict {
 sub rsync {
 	my $self = shift;
 
-	my ($src, $dest) = ($self->sync, $self->directory);
+	my ($src, $dest) = ($self->sync_subbed, $self->directory);
+	return 1 unless ($src);
 
-	# FIXME: clean this up some
-	$src =~ s/\$arch/$self->{arch}/g;
-	$src =~ s/\$rel/$self->{rel}/g;
-	$src =~ s/\$repo/$self->{name}/g;
+	# FIXME: all this needs cleaning up
 	`mkdir -p $dest/`;
 	die "Could not create $dest\n" if ($? << 8 != 0);
 
 	warn "rsync -avz --delete $src/ $dest/";
-	my $log = `rsync -avz --delete $src/ $dest/`;
+	my $log = `rsync -avz --delete "$src/" "$dest/"`;
 	$self->rsync_log($log);
 	$self->rsync_status($?);
 
@@ -121,6 +119,7 @@ sub sync_subbed {
 	my $self = shift;
 
 	my $src = $self->sync;
+	return undef unless ($src);
 
 	# FIXME: clean this up some
 	$src =~ s/\$arch/$self->{arch}/g;

@@ -20,11 +20,16 @@ if ($command eq 'list') {
 			$package->release,
 			$package->arch;
 	}
+
+} elsif ($command eq 'obsolete') {
+	$line->base->get_obsolete;
+
 } elsif ($command eq 'rsync') {
-	foreach my $name ($line->upstreams) {
+	foreach my $name ($line->upstream_names) {
 		print "Synchronising upstream $name\n";
 		$line->upstream($name)->rsync;
 	}
+
 } elsif ($command eq 'dump') {
 	use Data::Dumper;
 #$line->_upstream;

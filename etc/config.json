@@ -8,8 +8,8 @@
 		"train": [
 			{ "name": "dev", "version": "6"},
 			{ "name": "test", "version": "6" },
-			{ "name": "rc", "version": "6.6" },
-			{ "name": "prod", "version": "6.6" }
+			{ "name": "rc", "version": "6.6", "obsolete": true },
+			{ "name": "prod", "version": "6.6", "obsolete": true }
 		]
 	},
 	"trains": [
