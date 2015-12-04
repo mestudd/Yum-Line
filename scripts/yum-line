@@ -11,14 +11,37 @@ my $command = shift;
 
 if ($command eq 'list') {
 	my $name = shift;
+	my $repo = $line->upstream($name);
 
 	printf '%-50s %-15s %-15s %-10s'."\n", qw(Name Version Release Arch);
-	foreach my $package ($line->upstream($name)->packages) {
+	foreach my $name ($repo->package_names) {
+		my $package = $repo->package($name);
 		printf '%-50s %-15s %-15s %-10s'."\n",
 			$package->name,
 			$package->version,
 			$package->release,
 			$package->arch;
+	}
+
+} elsif ($command eq 'listall') {
+	my $name = shift;
+	my $repo = $line->upstream($name);
+
+	printf '%-50s %-15s %-15s %-10s'."\n", qw(Name Version Release Arch);
+	foreach my $name ($repo->package_names) {
+		my @all = $repo->package_all($name);
+		my $package = shift @all;
+		printf '%-50s %-15s %-15s %-10s'."\n",
+			$package->name,
+			$package->version,
+			$package->release,
+			$package->arch;
+		printf '%-50s %-15s %-15s %-10s'."\n",
+				'',
+				$_->version,
+				$_->release,
+				$_->arch
+			foreach (@all);
 	}
 
 } elsif ($command eq 'obsolete') {

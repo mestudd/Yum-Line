@@ -56,7 +56,16 @@ has sync => (
 
 sub _build_packages {
 	my $self = shift;
-	return [ $self->_read_dir(Path::Class::Dir->new($self->directory)) ];
+
+	my @raw = $self->_read_dir(Path::Class::Dir->new($self->directory));
+	my %packages;
+	foreach my $p (@raw) {
+		$packages{$p->name} = [
+			reverse sort $p, @{ $packages{$p->name} // [] }
+		];
+	}
+
+	return \%packages;
 }
 
 sub _build_directory {
@@ -64,10 +73,23 @@ sub _build_directory {
 	return sprintf('%s/%s/%s', $self->base, $self->name, $self->arch);
 }
 
-sub packages {
+sub package {
+	my ($self, $name) = @_;
+
+	my @all = @{ $self->_packages->{$name} // [] };
+	return $all[0];
+}
+
+sub package_all {
+	my ($self, $name) = @_;
+
+	return @{ $self->_packages->{$name} // [] };
+}
+
+sub package_names {
 	my $self = shift;
 
-	return @{ $self->_packages };
+	return sort keys %{ $self->_packages };
 }
 
 sub _read_dir {
