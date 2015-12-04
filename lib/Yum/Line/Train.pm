@@ -36,8 +36,8 @@ has _upstream => (
 sub _build_repos {
 	my $self = shift;
 	my @repos;
-	foreach my $stream ($self->stops) {
-		my $name = $self->name .'-'. $stream;
+	foreach my $stop ($self->stops) {
+		my $name = $self->name .'-'. $stop;
 		push @repos, Yum::Line::Repo->new(
 			name => $name,
 			base => $self->base,
@@ -51,13 +51,13 @@ sub _build_repos {
 
 # better name for listing candidates for loading
 sub load {
-	my ($self, $stream) = @_;
-	die "Invalid stop $stream\n"
-		unless (grep $stream eq $_, $self->stops);
+	my ($self, $stop) = @_;
+	die "Invalid stop $stop\n"
+		unless (grep $stop eq $_, $self->stops);
 
-	my @from = values %{ $self->_upstream };
+	my @from = $self->_upstream_for($stop);
 	my @to = map $self->repo($self->name ."-$_"),
-		before_incl { $_ eq $stream } $self->stops;
+		before_incl { $_ eq $stop } $self->stops;
 	my @packages = distinct map $_->package_names, @from;
 
 	my @load;
@@ -72,9 +72,9 @@ sub load {
 
 	return @load;
 	# for each package:
-	#    if upstream version newer than train up to $stream
-	#        hard-link new version into $stream
-	# refresh $stream
+	#    if upstream version newer than train up to $stop
+	#        hard-link new version into $stop
+	# refresh $stop
 }
 
 # get the most recent package in the train
@@ -117,6 +117,13 @@ sub upstream {
 	my ($self, $name) = @_;
 
 	return $self->_upstream->{$name};
+}
+
+# here so base can override
+sub _upstream_for {
+	my $self = shift;
+
+	return values %{ $self->_upstream };
 }
 
 sub upstream_names {

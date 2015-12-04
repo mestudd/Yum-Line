@@ -111,10 +111,14 @@ sub stop_definitions {
 	return @{ $self->_stops };
 }
 
-sub upstream_names {
-	my $self = shift;
+# here so base can override
+sub _upstream_for {
+	my ($self, $stop) = @_;
 
-	return sort keys %{ $self->_upstream };
+	my ($definition) = grep $stop eq $_->{name}, @{ $self->_stops };
+	my $version = $definition->{version};
+	return map $self->upstream("$_-$version"),
+		@{ $self->_upstream_names };
 }
 
 1;
