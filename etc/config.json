@@ -5,7 +5,7 @@
 		"sync": "mirrors.rit.edu::centos/$rel/$repo/$arch",
 		"upstream": [ "updates" ],
 		"version": "6",
-		"train": [
+		"stops": [
 			{ "name": "dev", "version": "6"},
 			{ "name": "test", "version": "6" },
 			{ "name": "rc", "version": "6.6", "obsolete": true },

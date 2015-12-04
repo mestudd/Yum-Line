@@ -60,6 +60,8 @@ sub _build_packages {
 	my @raw = $self->_read_dir(Path::Class::Dir->new($self->directory));
 	my %packages;
 	foreach my $p (@raw) {
+		next if ($self->_ignore_rpm($p));
+
 		$packages{$p->name} = [
 			reverse sort $p, @{ $packages{$p->name} // [] }
 		];
@@ -71,6 +73,13 @@ sub _build_packages {
 sub _build_directory {
 	my $self = shift;
 	return sprintf('%s/%s/%s', $self->base, $self->name, $self->arch);
+}
+
+sub _ignore_rpm {
+	my ($self, $package) = @_;
+
+	return $self->_restrict
+		&& !grep $package->name eq $_, @{ $self->_restrict };
 }
 
 sub package {
@@ -96,6 +105,7 @@ sub _read_dir {
 	my ($self, $dir) = @_;
 
 	my @packages;
+	$dir->mkpath();
 	$dir->recurse(callback => sub {
 		my $file = shift;
 		if (!$file->is_dir && $file->basename =~ /\.rpm$/) {

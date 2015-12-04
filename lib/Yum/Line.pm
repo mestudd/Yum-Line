@@ -65,7 +65,8 @@ sub _build_trains {
 	my %trains;
 	foreach my $t (@{ $config->{trains} }) {
 		$trains{$t->{name}} = Yum::Line::Train->new(
-			base => $config->{directory},
+			base  => $config->{directory},
+			stops => [ $self->base->stops ],
 			%$t,
 			_upstream => { map +($_, $self->_upstream->{$_}),
 					@{ $t->{upstream} } },

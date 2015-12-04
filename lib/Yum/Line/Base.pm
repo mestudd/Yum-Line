@@ -19,11 +19,6 @@ has _repos => (
 	builder => '_build_repos',
 );
 
-has _train => (
-	is       => 'ro',
-	init_arg => 'train',
-);
-
 # FIXME put upstream in a role
 has '+_upstream' => (
 	lazy    => 1,
@@ -43,7 +38,7 @@ sub _build_repos {
 	my $self = shift;
 
 	my @repos;
-	foreach my $stream ($self->train) {
+	foreach my $stream ($self->stop_definitions) {
 		my $name = $self->name .'-'. $stream->{name};
 		push @repos, Yum::Line::Repo->new(
 			name => $name,
@@ -61,7 +56,7 @@ sub _build_upstream {
 	my $self = shift;
 
 	my (%repos, %seen);
-	foreach my $stream ($self->train) {
+	foreach my $stream ($self->stop_definitions) {
 		my $v = $stream->{version};
 		if (!$seen{ $v }) {
 			$seen{ $v } = 1;
@@ -104,10 +99,16 @@ sub get_obsolete {
 	}
 }
 
-sub train {
+sub stops {
 	my ($self) = @_;
 
-	return @{ $self->_train };
+	return map $_->{name}, @{ $self->_stops };
+}
+
+sub stop_definitions {
+	my ($self) = @_;
+
+	return @{ $self->_stops };
 }
 
 sub upstream_names {
