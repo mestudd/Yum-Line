@@ -49,32 +49,19 @@ sub _build_repos {
 	return \@repos;
 }
 
-# better name for listing candidates for loading
 sub load {
 	my ($self, $stop) = @_;
-	die "Invalid stop $stop\n"
-		unless (grep $stop eq $_, $self->stops);
 
-	my @from = $self->_upstream_for($stop);
-	my @to = map $self->repo($self->name ."-$_"),
-		before_incl { $_ eq $stop } $self->stops;
-	my @packages = distinct map $_->package_names, @from;
-
-	my @load;
-	foreach my $name (@packages) {
-		my $loaded = $self->package($name, @to);
-		my $candidate = $self->package($name, @from);
-
-		if (!defined($loaded) || $candidate gt $loaded) {
-			push @load, $candidate;
-		}
+	my $log = '';
+	my $to = $self->repo($stop)->directory;
+	foreach my $package ($self->updates($stop)) {
+		my $file = $package->file;
+		$log .= `ln -v \"$file\" \"$to\"`;
 	}
 
-	return @load;
-	# for each package:
-	#    if upstream version newer than train up to $stop
-	#        hard-link new version into $stop
-	# refresh $stop
+	$log .= `createrepo --update --workers 4 $to`;
+
+	return $log;
 }
 
 # get the most recent package in the train
@@ -102,15 +89,48 @@ sub stops {
 }
 
 sub repo {
-	my ($self, $name) = @_;
+	my ($self, $stop) = @_;
+	die "Invalid stop $stop\n"
+		unless (grep $stop eq $_, $self->stops);
 
-	return (grep $name eq $_->name, @{ $self->_repos // [] });
+	my $name = $self->name .'-'. $stop;
+	my @repo = (grep $name eq $_->name, @{ $self->_repos // [] });
+	return $repo[0];
 }
 
+=cut
 sub repo_names {
 	my $self = shift;
 
 	return @{ $self->_repos // [] };
+}
+=cut
+
+sub updates {
+	my ($self, $stop) = @_;
+	die "Invalid stop $stop\n"
+		unless (grep $stop eq $_, $self->stops);
+
+	my @from = $self->_upstream_for($stop);
+	my @to = map $self->repo($_),
+		before_incl { $_ eq $stop } $self->stops;
+	my @packages = distinct map $_->package_names, @from;
+
+	my @load;
+	foreach my $name (@packages) {
+		my $loaded = $self->package($name, @to);
+		my $candidate = $self->package($name, @from);
+
+		if (!defined($loaded) || $candidate gt $loaded) {
+			push @load, $candidate;
+		}
+	}
+
+	return @load;
+	# for each package:
+	#    if upstream version newer than train up to $stop
+	#        hard-link new version into $stop
+	# refresh $stop
 }
 
 sub upstream {

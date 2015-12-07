@@ -26,6 +26,10 @@ has release => (
 	is      => 'ro',
 );
 
+has repo => (
+	is      => 'ro',
+);
+
 has version => (
 	is      => 'ro',
 );
@@ -48,13 +52,14 @@ sub _compare_name {
 }
 
 sub new_file {
-	my ($class, $file) = @_;
+	my ($class, $file, $repo) = @_;
 
 	$file = file($file) unless (ref($file));
 	# FIXME: try actually reading file, not assuming based on name
 	if ($file->basename =~ /^(.+)-(.+?)-(.+?)\.([a-z0-9_]+)\.rpm$/) {
 		return Yum::Line::Package->new(
 			file => $file,
+			repo => $repo,
 			name => $1,
 			version => $2,
 			release => $3,

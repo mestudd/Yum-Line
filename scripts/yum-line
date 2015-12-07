@@ -3,20 +3,37 @@ use strict;
 use warnings;
 use v5.10.0;
 
+use Term::ReadKey;
 use Yum::Line;
 
 my $line = Yum::Line->new_with_options;
 
 my $command = shift;
 
-if ($command eq 'list') {
+if ($command eq 'check-update') {
+	my $stop = shift;
+
+	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
+		say 'Into ', $train->name;
+		say sprintf '  %-50s %-15s %-15s %-12s %-10s', qw(Name Version Release Arch Repo);
+		foreach my $package ($train->updates($stop)) {
+			printf '  %-50s %-15s %-15s %-12s %-10s %s'."\n",
+				$package->name,
+				$package->version,
+				$package->release,
+				$package->arch,
+				$package->repo // '', $package->file;
+		}
+	}
+
+} elsif ($command eq 'list') {
 	my $name = shift;
 	my $repo = $line->upstream($name);
 
-	printf '  %-50s %-15s %-15s %-10s'."\n", qw(Name Version Release Arch);
+	printf '  %-50s %-15s %-15s %-12s'."\n", qw(Name Version Release Arch);
 	foreach my $name ($repo->package_names) {
 		my $package = $repo->package($name);
-		printf '  %-50s %-15s %-15s %-10s'."\n",
+		printf '  %-50s %-15s %-15s %-12s'."\n",
 			$package->name,
 			$package->version,
 			$package->release,
@@ -27,16 +44,16 @@ if ($command eq 'list') {
 	my $name = shift;
 	my $repo = $line->upstream($name);
 
-	printf '  %-50s %-15s %-15s %-10s'."\n", qw(Name Version Release Arch);
+	printf '  %-50s %-15s %-15s %-12s'."\n", qw(Name Version Release Arch);
 	foreach my $name ($repo->package_names) {
 		my @all = $repo->package_all($name);
 		my $package = shift @all;
-		printf '  %-50s %-15s %-15s %-10s'."\n",
+		printf '  %-50s %-15s %-15s %-12s'."\n",
 			$package->name,
 			$package->version,
 			$package->release,
 			$package->arch;
-		printf '  %-50s %-15s %-15s %-10s'."\n",
+		printf '  %-50s %-15s %-15s %-12s'."\n",
 				'',
 				$_->version,
 				$_->release,
@@ -45,17 +62,31 @@ if ($command eq 'list') {
 	}
 
 } elsif ($command eq 'load') {
-	my $stream = shift;
+	my $stop = shift;
 
 	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
 		say 'Into ', $train->name;
-		say sprintf '  %-50s %-15s %-15s %-10s', qw(Name Version Release Arch);
-		foreach my $package ($train->load($stream)) {
-			printf '  %-50s %-15s %-15s %-10s'."\n",
+		say sprintf '  %-50s %-15s %-15s %-12s', qw(Name Version Release Arch);
+		foreach my $package ($train->updates($stop)) {
+			printf '  %-50s %-15s %-15s %-12s'."\n",
 				$package->name,
 				$package->version,
 				$package->release,
 				$package->arch;
+		}
+	}
+
+	my $answer;
+	while (1) {
+		print 'Is this ok [y/N] ';
+		$answer = lc(ReadLine(0));
+		chomp $answer;
+		$answer = 'n' if (!$answer);
+		last if ($answer eq 'n' || $answer eq 'y');
+	}
+	if ($answer eq 'y') {
+		foreach my $train ($line->base, map $line->train($_), $line->train_names) {
+			print $train->load($stop);
 		}
 	}
 

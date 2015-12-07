@@ -109,7 +109,7 @@ sub _read_dir {
 	$dir->recurse(callback => sub {
 		my $file = shift;
 		if (!$file->is_dir && $file->basename =~ /\.rpm$/) {
-			push @packages, Yum::Line::Package->new_file($file);
+			push @packages, Yum::Line::Package->new_file($file, $self->name);
 		}
 	});
 
@@ -133,7 +133,7 @@ sub rsync {
 	die "Could not create $dest\n" if ($? << 8 != 0);
 
 	warn "rsync -avz --delete $src/ $dest/";
-	my $log = `rsync -avz --delete "$src/" "$dest/"`;
+	my $log = `rsync -avz --delete --exclude repoview "$src/" "$dest/"`;
 	$self->rsync_log($log);
 	$self->rsync_status($?);
 
