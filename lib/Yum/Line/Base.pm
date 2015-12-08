@@ -99,6 +99,25 @@ sub get_obsolete {
 	}
 }
 
+around init => sub {
+	my $orig = shift;
+	my $self = shift;
+
+	my $log = $orig->($self, @_);
+
+	foreach my $definition ($self->stop_definitions) {
+		my $stop = $definition->{name};
+		my $version = $definition->{version};
+		my $base = $self->base . '/os';
+
+		$log .= `mkdir -vp "$base-$stop"`;
+		$log .= `rm -vf "$base-$stop/x86_64"`;
+		$log .= `ln -vs "$base-$version/x86_64/" "$base-$stop/x86_64"`;
+	}
+
+	return $log;
+};
+
 around load => sub {
 	my $orig = shift;
 	my $self = shift;

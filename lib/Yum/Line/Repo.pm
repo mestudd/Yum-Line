@@ -82,6 +82,16 @@ sub _ignore_rpm {
 		&& !grep $package->name eq $_, @{ $self->_restrict };
 }
 
+sub init {
+	my ($self) = @_;
+
+	my $dir = $self->directory;
+	my $log = `mkdir -v "$dir"`;
+	$log .= `createrepo --update --workers 4 $dir`;
+
+	return $log
+}
+
 sub package {
 	my ($self, $name) = @_;
 

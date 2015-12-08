@@ -49,6 +49,15 @@ sub _build_repos {
 	return \@repos;
 }
 
+sub init {
+	my $self = shift;
+
+	my $log = '';
+	$log .= $self->repo($_)->init foreach ($self->stops);
+
+	return $log
+}
+
 sub load {
 	my ($self, $stop) = @_;
 

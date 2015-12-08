@@ -10,7 +10,15 @@ my $line = Yum::Line->new_with_options;
 
 my $command = shift;
 
-if ($command eq 'list') {
+if ($command eq 'init') {
+	my $stop = shift;
+
+	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
+		say 'Initializing ', $train->name;
+		print $train->init;
+	}
+
+} elsif ($command eq 'list') {
 	my $name = shift;
 	my $repo = $line->upstream($name);
 
