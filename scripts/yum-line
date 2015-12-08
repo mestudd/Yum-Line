@@ -10,23 +10,7 @@ my $line = Yum::Line->new_with_options;
 
 my $command = shift;
 
-if ($command eq 'check-update') {
-	my $stop = shift;
-
-	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
-		say 'Into ', $train->name;
-		say sprintf '  %-50s %-15s %-15s %-12s %-10s', qw(Name Version Release Arch Repo);
-		foreach my $package ($train->updates($stop)) {
-			printf '  %-50s %-15s %-15s %-12s %-10s %s'."\n",
-				$package->name,
-				$package->version,
-				$package->release,
-				$package->arch,
-				$package->repo // '', $package->file;
-		}
-	}
-
-} elsif ($command eq 'list') {
+if ($command eq 'list') {
 	my $name = shift;
 	my $repo = $line->upstream($name);
 
@@ -61,13 +45,29 @@ if ($command eq 'check-update') {
 			foreach (@all);
 	}
 
+} elsif ($command eq 'loadable') {
+	my $stop = shift;
+
+	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
+		say 'Into ', $train->name;
+		say sprintf '  %-50s %-15s %-15s %-12s %-10s', qw(Name Version Release Arch Repo);
+		foreach my $package ($train->loadable($stop)) {
+			printf '  %-50s %-15s %-15s %-12s %-10s %s'."\n",
+				$package->name,
+				$package->version,
+				$package->release,
+				$package->arch,
+				$package->repo // '', $package->file;
+		}
+	}
+
 } elsif ($command eq 'load') {
 	my $stop = shift;
 
 	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
 		say 'Into ', $train->name;
 		say sprintf '  %-50s %-15s %-15s %-12s', qw(Name Version Release Arch);
-		foreach my $package ($train->updates($stop)) {
+		foreach my $package ($train->loadable($stop)) {
 			printf '  %-50s %-15s %-15s %-12s'."\n",
 				$package->name,
 				$package->version,
@@ -87,6 +87,51 @@ if ($command eq 'check-update') {
 	if ($answer eq 'y') {
 		foreach my $train ($line->base, map $line->train($_), $line->train_names) {
 			print $train->load($stop);
+		}
+	}
+
+} elsif ($command eq 'promotable') {
+	my $stop = shift;
+
+	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
+		say 'Into ', $train->name;
+		say sprintf '  %-50s %-15s %-15s %-12s %-10s', qw(Name Version Release Arch Repo);
+		foreach my $package ($train->promotable($stop)) {
+			printf '  %-50s %-15s %-15s %-12s %-10s %s'."\n",
+				$package->name,
+				$package->version,
+				$package->release,
+				$package->arch,
+				$package->repo // '', $package->file;
+		}
+	}
+
+} elsif ($command eq 'promote') {
+	my $stop = shift;
+
+	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
+		say 'Into ', $train->name;
+		say sprintf '  %-50s %-15s %-15s %-12s', qw(Name Version Release Arch);
+		foreach my $package ($train->promotable($stop)) {
+			printf '  %-50s %-15s %-15s %-12s'."\n",
+				$package->name,
+				$package->version,
+				$package->release,
+				$package->arch;
+		}
+	}
+
+	my $answer;
+	while (1) {
+		print 'Is this ok [y/N] ';
+		$answer = lc(ReadLine(0));
+		chomp $answer;
+		$answer = 'n' if (!$answer);
+		last if ($answer eq 'n' || $answer eq 'y');
+	}
+	if ($answer eq 'y') {
+		foreach my $train ($line->base, map $line->train($_), $line->train_names) {
+			print $train->promote($stop);
 		}
 	}
 
