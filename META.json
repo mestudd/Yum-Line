@@ -47,7 +47,18 @@
       }
    },
    "release_status" : "stable",
-   "version" : "0.0.1",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/mestudd/Yum-Line/issues"
+      },
+      "homepage" : "https://github.com/mestudd/Yum-Line",
+      "repository" : {
+         "type" : "git",
+         "url" : "https://github.com/mestudd/Yum-Line.git",
+         "web" : "https://github.com/mestudd/Yum-Line"
+      }
+   },
+   "version" : "0.0.2",
    "x_contributors" : [
       "Malcolm Studd <mstudd@recognia.com>"
    ]
