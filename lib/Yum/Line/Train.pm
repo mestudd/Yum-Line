@@ -211,7 +211,7 @@ sub repo {
 	return $repo[0];
 }
 
-=comment
+=for comment
 sub repo_names {
 	my $self = shift;
 
