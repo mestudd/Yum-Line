@@ -1,5 +1,5 @@
 {
-   "abstract" : "Blah blah blah",
+   "abstract" : "Manage lines of yum repositories",
    "author" : [
       "Malcolm Studd <mestudd@gmail.com>"
    ],
