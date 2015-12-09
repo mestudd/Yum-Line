@@ -49,6 +49,45 @@ sub _build_repos {
 	return \@repos;
 }
 
+sub clean {
+	my ($self, $stop) = @_;
+
+	my @packages = $self->cleanable($stop);
+	my $log = '';
+	foreach my $package (@packages) {
+		my $file = $package->file;
+		$log .= `rm -v \"$file\"`;
+	}
+
+	my $from = $self->repo($stop)->directory;
+	$log .= `createrepo --update --workers 4 $from`;
+
+	return $log;
+}
+
+sub cleanable {
+	my ($self, $stop) = @_;
+	die "Invalid stop $stop\n"
+		unless (grep $stop eq $_, $self->stops);
+
+	my @check = map $self->repo($_),
+		after_incl { $_ eq $stop } $self->stops;
+	my $from = shift @check;
+
+	my @clean;
+	foreach my $name ($from->package_names) {
+		my $further = $self->package($name, @check);
+		my ($candidate, @rest) = $from->package_all($name);
+
+		push @clean, @rest;
+		if (defined($further) && $candidate le $further) {
+			push @clean, $candidate;
+		}
+	}
+
+	return @clean;
+}
+
 sub init {
 	my $self = shift;
 
