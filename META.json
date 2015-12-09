@@ -37,7 +37,15 @@
       },
       "runtime" : {
          "requires" : {
-            "perl" : "5.008005"
+            "List::MoreUtils" : "0",
+            "Moo" : "0",
+            "MooX::Options" : "0",
+            "Path::Class::Dir" : "0",
+            "Path::Class::File" : "0",
+            "RPM::VersionSort" : "0",
+            "namespace::clean" : "0",
+            "perl" : "5.010000",
+            "strictures" : "0"
          }
       },
       "test" : {

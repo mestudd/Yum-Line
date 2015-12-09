@@ -1,6 +1,13 @@
-requires 'perl', '5.008005';
+requires 'perl', '5.010000';
 
-# requires 'Some::Module', 'VERSION';
+requires 'List::MoreUtils';
+requires 'Moo';
+requires 'MooX::Options';
+requires 'namespace::clean';
+requires 'Path::Class::Dir';
+requires 'Path::Class::File';
+requires 'RPM::VersionSort';
+requires 'strictures';
 
 on test => sub {
     requires 'Test::More', '0.96';
