@@ -2,5 +2,8 @@ Revision history for Yum-Line
 
 {{$NEXT}}
 
+0.0.2  2015-12-09 17:15:16 EST
+        - Added scant documentation
+
 0.0.1  2015-12-09 16:52:36 EST
         - Initial release
