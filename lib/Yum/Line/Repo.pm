@@ -86,7 +86,9 @@ sub init {
 	my ($self) = @_;
 
 	my $dir = $self->directory;
-	my $log = `mkdir -v "$dir"`;
+	my $log = `mkdir -vp "$dir"`;
+	die "Could not create $dir\n" if ($? << 8 != 0);
+
 	$log .= `createrepo --update --workers 4 $dir`;
 
 	return $log
@@ -139,9 +141,6 @@ sub rsync {
 	return 1 unless ($src);
 
 	# FIXME: all this needs cleaning up
-	`mkdir -p $dest/`;
-	die "Could not create $dest\n" if ($? << 8 != 0);
-
 	warn "rsync -avz --delete $src/ $dest/";
 	my $log = `rsync -avz --delete --exclude repoview "$src/" "$dest/"`;
 	$self->rsync_log($log);
