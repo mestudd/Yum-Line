@@ -1,6 +1,7 @@
 Revision history for Yum-Line
 
 {{$NEXT}}
+        - Add metadata and follow milla conventions
 
 0.0.2  2015-12-09 17:15:16 EST
         - Added scant documentation
