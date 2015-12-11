@@ -13,7 +13,7 @@ use namespace::clean;
 # Keep these in namespace
 use MooX::Options  protect_argv => 0;
 
-our $VERSION = '0.0.2';
+our $VERSION = '0.0.3';
 
 option config_file => (
 	is      => 'ro',
