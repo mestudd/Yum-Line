@@ -141,6 +141,9 @@ sub rsync {
 	return 1 unless ($src);
 
 	# FIXME: all this needs cleaning up
+	`mkdir -p $dest/`;
+	die "Could not create $dest\n" if ($? << 8 != 0); 
+
 	warn "rsync -avz --delete $src/ $dest/";
 	my $log = `rsync -avz --delete --exclude repoview "$src/" "$dest/"`;
 	$self->rsync_log($log);
