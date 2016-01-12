@@ -48,7 +48,13 @@ sub compare {
 sub _compare_name {
 	my $self = shift;
 
-	return sprintf '%s-%s-%s', $self->name, $self->version, $self->release;
+	return sprintf '%s-%s', $self->name, $self->full_version;
+}
+
+sub full_version {
+	my $self = shift;
+
+	return sprintf '%s-%s', $self->version, $self->release;
 }
 
 sub new_file {

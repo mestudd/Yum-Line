@@ -15,14 +15,9 @@ if ($command eq 'cleanable') {
 
 	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
 		say 'Into ', $train->name;
-		say sprintf '  %-50s %-15s %-15s %-12s %-10s', qw(Name Version Release Arch Repo);
+		say_package_header();
 		foreach my $package ($train->cleanable($stop)) {
-			printf '  %-50s %-15s %-15s %-12s %-10s %s'."\n",
-				$package->name,
-				$package->version,
-				$package->release,
-				$package->arch,
-				$package->repo // '', $package->file;
+			say_package($package);
 		}
 	}
 
@@ -31,13 +26,9 @@ if ($command eq 'cleanable') {
 
 	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
 		say 'Into ', $train->name;
-		say sprintf '  %-50s %-15s %-15s %-12s', qw(Name Version Release Arch);
+		say_package_header();
 		foreach my $package ($train->cleanable($stop)) {
-			printf '  %-50s %-15s %-15s %-12s'."\n",
-				$package->name,
-				$package->version,
-				$package->release,
-				$package->arch;
+			say_package($package);
 		}
 	}
 
@@ -67,29 +58,21 @@ if ($command eq 'cleanable') {
 	my $name = shift;
 	my $repo = $line->upstream($name);
 
-	printf '  %-50s %-15s %-15s %-12s'."\n", qw(Name Version Release Arch);
+	say_package_header();
 	foreach my $name ($repo->package_names) {
 		my $package = $repo->package($name);
-		printf '  %-50s %-15s %-15s %-12s'."\n",
-			$package->name,
-			$package->version,
-			$package->release,
-			$package->arch;
+		say_package($package);
 	}
 
 } elsif ($command eq 'listall') {
 	my $name = shift;
 	my $repo = $line->upstream($name);
 
-	printf '  %-50s %-15s %-15s %-12s'."\n", qw(Name Version Release Arch);
+	say_package_header();
 	foreach my $name ($repo->package_names) {
 		my @all = $repo->package_all($name);
 		my $package = shift @all;
-		printf '  %-50s %-15s %-15s %-12s'."\n",
-			$package->name,
-			$package->version,
-			$package->release,
-			$package->arch;
+		say_package($package);
 		printf '  %-50s %-15s %-15s %-12s'."\n",
 				'',
 				$_->version,
@@ -103,14 +86,9 @@ if ($command eq 'cleanable') {
 
 	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
 		say 'Into ', $train->name;
-		say sprintf '  %-50s %-15s %-15s %-12s %-10s', qw(Name Version Release Arch Repo);
+		say_package_header();
 		foreach my $package ($train->loadable($stop)) {
-			printf '  %-50s %-15s %-15s %-12s %-10s %s'."\n",
-				$package->name,
-				$package->version,
-				$package->release,
-				$package->arch,
-				$package->repo // '', $package->file;
+			say_package($package);
 		}
 	}
 
@@ -119,13 +97,9 @@ if ($command eq 'cleanable') {
 
 	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
 		say 'Into ', $train->name;
-		say sprintf '  %-50s %-15s %-15s %-12s', qw(Name Version Release Arch);
+		say_package_header();
 		foreach my $package ($train->loadable($stop)) {
-			printf '  %-50s %-15s %-15s %-12s'."\n",
-				$package->name,
-				$package->version,
-				$package->release,
-				$package->arch;
+			say_package($package);
 		}
 	}
 
@@ -148,14 +122,9 @@ if ($command eq 'cleanable') {
 
 	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
 		say 'Into ', $train->name;
-		say sprintf '  %-50s %-15s %-15s %-12s %-10s', qw(Name Version Release Arch Repo);
+		say_package_header();
 		foreach my $package ($train->promotable($stop)) {
-			printf '  %-50s %-15s %-15s %-12s %-10s %s'."\n",
-				$package->name,
-				$package->version,
-				$package->release,
-				$package->arch,
-				$package->repo // '', $package->file;
+			say_package($package);
 		}
 	}
 
@@ -164,13 +133,9 @@ if ($command eq 'cleanable') {
 
 	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
 		say 'Into ', $train->name;
-		say sprintf '  %-50s %-15s %-15s %-12s', qw(Name Version Release Arch);
+		say_package_header();
 		foreach my $package ($train->promotable($stop)) {
-			printf '  %-50s %-15s %-15s %-12s'."\n",
-				$package->name,
-				$package->version,
-				$package->release,
-				$package->arch;
+			say_package($package);
 		}
 	}
 
@@ -231,6 +196,24 @@ sub say_base {
 	say '   Uses ', join (', ', @{ $base->_upstream_names });
 	say '   Train';
 	say "      $_->{name} $_->{version}" foreach ($base->stop_definitions);
+}
+
+sub say_package {
+	my ($package, $secondary) = shift;
+
+	foreach my $file ($package->packages) {
+		say sprintf '  %-50s %-15s %-15s %-12s %-10s %s',
+			($secondary ? '' : $file->name),
+			$file->version,
+			$file->release,
+			$file->arch,
+			$file->repo // '',
+			$file->file;
+	}
+}
+
+sub say_package_header {
+	say sprintf '  %-50s %-15s %-15s %-12s %-10s', qw(Name Version Release Arch Repo);
 }
 
 sub say_repo {

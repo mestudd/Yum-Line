@@ -55,8 +55,7 @@ sub clean {
 	my @packages = $self->cleanable($stop);
 	my $log = '';
 	foreach my $package (@packages) {
-		my $file = $package->file;
-		$log .= `rm -v \"$file\"`;
+		$log .= $package->remove;
 	}
 
 	my $from = $self->repo($stop)->directory;
@@ -104,8 +103,7 @@ sub load {
 	my $log = '';
 	my $to = $self->repo($stop)->directory;
 	foreach my $package (@packages) {
-		my $file = $package->file;
-		$log .= `ln -v \"$file\" \"$to\"`;
+		$log .= $package->link($to);
 	}
 
 	$log .= `createrepo --update --workers 4 $to`;
@@ -125,6 +123,7 @@ sub loadable {
 
 	my @load;
 	foreach my $name (@packages) {
+$DB::single=1 if ($name eq 'wxGTK');
 		my $loaded = $self->package($name, @to);
 		my $candidate = $self->package($name, @from);
 
@@ -162,8 +161,7 @@ sub promote {
 	my $log = '';
 	my $to = $self->repo($to[1])->directory;
 	foreach my $package (@packages) {
-		my $file = $package->file;
-		$log .= `mv -v \"$file\" \"$to\"`;
+		$log .= $package->move($to);
 	}
 
 	$log .= `createrepo --update --workers 4 $to`;

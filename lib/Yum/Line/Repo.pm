@@ -1,6 +1,7 @@
 package Yum::Line::Repo;
 use v5.10.0;
 
+use List::Util qw(first);
 use Path::Class::Dir;
 use Path::Class::File;
 use Yum::Line::Package;
@@ -62,9 +63,19 @@ sub _build_packages {
 	foreach my $p (@raw) {
 		next if ($self->_ignore_rpm($p));
 
-		$packages{$p->name} = [
-			reverse sort $p, @{ $packages{$p->name} // [] }
-		];
+		my $versions = $packages{$p->name} // [];
+		my $match = first(sub { $_->package_matches($p) }, @$versions);
+		if (defined $match) {
+			$match->add_package($p);
+		} else {
+			my $entry = Yum::Line::Repo::Entry->new(
+				name    => $p->name,
+				version => $p->full_version,
+			);
+			$entry->add_package($p);
+
+			$packages{$p->name} = [ reverse sort $entry, @$versions ];
+		}
 	}
 
 	return \%packages;
@@ -153,11 +164,14 @@ sub rsync {
 	return ($self->rsync_status >> 8) == 0;
 }
 
+=for comment
+FIXME: this is wrong
 sub scan_repo {
 	my $self = shift;
 
 	$self->_packages([ $self->_read_dir(Path::Class::Dir->new($self->directory)) ]);
 }
+=cut
 
 sub sync_subbed {
 	my $self = shift;
@@ -172,4 +186,97 @@ sub sync_subbed {
 
 	return $src;
 }
+
+package Yum::Line::Repo::Entry;
+use RPM::VersionSort;
+use Moo;
+use strictures 2;
+use namespace::clean;
+
+use overload 'cmp' => 'compare';
+
+has name => (is => 'ro');
+has _packages => (is => 'ro', default => sub { {} });
+has version => (is => 'ro');
+
+sub add_package {
+	my ($self, $package) = @_;
+	die "Mismatched package version\n"
+		if ($package->full_version ne $self->version);
+
+	$self->_packages->{$package->arch} = $package;
+}
+
+sub arches {
+	my ($self) = @_;
+
+	return sort keys %{ $self->_packages };
+}
+
+sub compare {
+	my ($self, $other, $swap) = @_;
+	my $result = rpmvercmp(
+		$self->_compare_name,
+		$other->_compare_name
+	);
+	$result = -$result if $swap;
+
+	return $result;
+}
+
+sub _compare_name {
+	my $self = shift;
+
+	return sprintf '%s-%s', $self->name, $self->version;
+}
+
+sub link {
+	my ($self, $to) = @_;
+
+	my $log = '';
+	foreach my $package ($self->packages) {
+		my $file = $package->file;
+		$log .= `ln -v \"$file\" \"$to\"`;
+	}
+
+	return $log;
+}
+
+sub move {
+	my ($self, $to) = @_;
+
+	my $log = '';
+	foreach my $package ($self->packages) {
+		my $file = $package->file;
+		$log .= `mv -v \"$file\" \"$to\"`;
+	}
+
+	return $log;
+}
+
+sub packages {
+	my ($self) = @_;
+
+	return values %{ $self->_packages };
+}
+
+sub package_matches {
+	my ($self, $package) = @_;
+
+	return $package->name eq $self->name
+		&& $package->full_version eq $self->version;
+}
+
+sub remove {
+	my ($self) = @_;
+
+	my $log = '';
+	foreach my $package ($self->packages) {
+		my $file = $package->file;
+		$log .= `rm -v \"$file\"`;
+	}
+
+	return $log;
+}
+
 1;
