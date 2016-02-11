@@ -1,10 +1,138 @@
 #!/usr/bin/env perl
+
+=head1 NAME
+
+yum-line - Utility for managing staged-release yum repositories
+
+=cut
+
 use strict;
 use warnings;
 use v5.10.0;
 
 use Term::ReadKey;
 use Yum::Line;
+
+=head1 SYNOPSIS
+
+    # Execute command 'command' with options and additional, command specific
+    # arguments
+    yum-line [options] <command> [arg1] [arg2] ...
+
+    # Initialise yum repositories
+    yum-line init
+
+    # Mirror obsolete upstream OS repositories
+    # FIXME: called obsolete
+    yum-line sync-obsolete
+
+    # Synchronise upstream repositories to local mirrors
+    # FIXME: called rsync
+    yum-line sync
+
+    # Load new packages from upstream mirrors into 'stop' repositories
+    yum-line load <stop> [package1] [package2] ...
+
+    # Promote packages from 'stop' to next stage repositories
+    yum-line promote <stop> [package1] [package2] ...
+
+    # Clean older packages from 'stop' repositories
+    yum-line clean <stop> [package1] [package2] ...
+
+    # List packages available from repository
+    # FIXME: non-upstream repos
+    yum-line list <repo> [package1] [package2] ...
+
+    # Dump understood configuration
+    yum-line dump
+
+Options:
+
+    --config                        File containing line configuration. See L<Yum::Line>for more information.
+    FIXME: --help                          Show help text.
+    FIXME: --train=<train1>,<train2>,...   Only work on listed trains
+    FIXME: -y, --assumeyes                 Assume yes; assume the answer to any question asked is 'yes'
+    FIXME: -n, --assumeno                  Assume no; assume the answer to any question asked is 'no'
+
+=head1 COMMANDS
+
+=head2 init
+
+Initialise the line repositories. Creates an empty repository for each line-stop
+pair if it does not exist. Links each os-stop repository to the upstream
+os-version repository. These links will be dangling if L</sync>/L</sync-obsolete>
+have not been run.
+
+=head2 sync
+
+Synchronise local mirrors of upstream repositories. For each upstream repository,
+retrieve the current set of packages so the mirror matches upstream exactly. If
+an upstream definition does not have a sync location, the repository is left
+alone. Upstreams that are marked obsolete are also left alone.
+
+=head2 sync-obsolete
+
+Synchronise local mirrors of obsolete OS repositories. Does the same as L</sync>,
+but for upstreams that are marked obsolete. This command is split from sync under
+the assumption that obsolete repositories do not change so it is a waste to sync
+them.
+
+=head2 load, loadable
+
+If run without any packages, load will load every available updated package into
+the specified stop repositories. If one or more packages or package globs are
+specified, yum-line will only load the listed packages. While loading packages,
+yum-line will B<not> ensure that any dependencies are satisfied.
+
+To show what load would do, the loadable command displays the changes, but does
+not actually apply them.
+
+=head2 promote, promotable
+
+If run without any packages, promote will move the latest version of each package
+update available in the specified stop to the next stop.  If one or more packages
+or package globs are specified, yum-line will only promote the listed packages.
+While promoting packages, yum-line will B<not> ensure that any dependencies are
+satisfied.
+
+To show what promote would do, the promotable command displays the changes, but does
+not actually apply them.
+
+=head2 clean, cleanable
+
+If run without any packages, clean will remove packages from the specified stop
+where there is a newer version available at that point in the line. If one or
+more packages or package globs are specified, yum-line will only clean the listed
+packages.
+
+To show what clean would do, the cleanable command displays the changes, but does
+not actually apply them.
+
+To understand better how clean works, consider a line with three stops: dev,
+test, and prod. The package foo has multiple versions:
+  dev:  foo-1.0, foo-1.6
+  test: foo-1.2, foo-1.3
+  prod: foo-1.1, foo-1.4
+
+'clean dev' will remove foo-1.0 because foo-1.6 is available.
+
+'clean test' will remove foo-1.2 and foo-1.3 because foo-1.4 is available.
+
+'clean prod' will remove foo-1.1 because foo-1.4 is available.
+
+=head2 list, listall
+
+Show the packages available in the specified repository.
+
+The listall command will show all versions for each package, rather than just
+the latest.
+
+=head2 dump
+
+The dump command prints the line configuration as understood by yum-line. It is
+useful for confirming that the configuration file is correct.
+
+=cut
 
 my $line = Yum::Line->new_with_options;
 
