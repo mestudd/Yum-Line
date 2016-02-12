@@ -98,4 +98,5 @@ is_deeply [ sort map $_->_compare_name, $result->packages ],
 	[qw( bar-0.45.1-1 baz-1.0-1 )],
 	'clean some from prod';
 
+`rm -rf $base`;
 done_testing;
