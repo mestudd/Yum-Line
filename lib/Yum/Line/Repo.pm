@@ -44,16 +44,16 @@ has _restrict => (
 	init_arg => 'restrict',
 );
 
-has rsync_log => (
-	is => 'rw',
-);
-
-has rsync_status => (
-	is => 'rw',
-);
-
-has sync => (
+has source => (
 	is => 'ro',
+);
+
+has sync_log => (
+	is => 'rw',
+);
+
+has sync_status => (
+	is => 'rw',
 );
 
 sub _build_packages {
@@ -147,23 +147,36 @@ sub restrict {
 	return @{ $self->_restrict // [] };
 }
 
-sub rsync {
+sub sync {
 	my $self = shift;
 
-	my ($src, $dest) = ($self->sync_subbed, $self->directory);
+	my ($src, $dest) = ($self->source_subbed, $self->directory);
 	return 1 unless ($src);
 
 	# FIXME: all this needs cleaning up
 	`mkdir -p $dest/`;
 	die "Could not create $dest\n" if ($? << 8 != 0); 
 
-	warn "rsync -avz --delete $src/ $dest/";
-	my $log = `rsync -avz --delete --exclude repoview "$src/" "$dest/"`;
-	$self->rsync_log($log);
-	$self->rsync_status($?);
+	my $cmd;
+	if ($src =~ /^rsync:/) {
+		$cmd = "rsync -avz --delete $src/ $dest/";
 
-	print $log;
-	return ($self->rsync_status >> 8) == 0;
+	} elsif ($src =~ /^https?:/) {
+		$src .= '/' unless ($src =~ m{/$});
+		my $options = '--no-verbose --mirror --no-parent --relative '.
+				'--no-host-directories --reject="index.html*"';
+		my $dirs =()= $src =~ m{/}g;
+		$dirs -= 3; # between scheme and host and at end of URI
+
+		$cmd = "wget $options --cut-dirs=$dirs --directory-prefix=$dest $src";
+	}
+
+	warn $cmd;
+	my $log .= `$cmd`;
+	$self->sync_log($log);
+	$self->sync_status($?);
+
+	return ($self->sync_status >> 8) == 0;
 }
 
 =for comment
@@ -175,10 +188,10 @@ sub scan_repo {
 }
 =cut
 
-sub sync_subbed {
+sub source_subbed {
 	my $self = shift;
 
-	my $src = $self->sync;
+	my $src = $self->source;
 	return undef unless ($src);
 
 	# FIXME: clean this up some

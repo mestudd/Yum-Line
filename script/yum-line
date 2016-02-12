@@ -27,7 +27,6 @@ use Yum::Line;
     yum-line sync-obsolete
 
     # Synchronise upstream repositories to local mirrors
-    # FIXME: called rsync
     yum-line sync
 
     # Load new packages from upstream mirrors into 'stop' repositories
@@ -186,10 +185,11 @@ if ($command eq 'clean' || $command eq 'cleanable') {
 } elsif ($command eq 'obsolete') {
 	$line->base->get_obsolete;
 
-} elsif ($command eq 'rsync') {
+} elsif ($command eq 'sync') {
 	foreach my $name ($line->upstream_names) {
 		print "Synchronising upstream $name\n";
-		$line->upstream($name)->rsync;
+		$line->upstream($name)->sync;
+		print $line->upstream($name)->sync_log;
 	}
 
 } elsif ($command eq 'dump') {
@@ -217,7 +217,7 @@ sub say_base {
 
 	say '   Name ', $base->name;
 	say '   Base ', $base->base;
-	say '   Sync ', $base->sync;
+	say '   Source ', $base->source;
 	say '   Version ', $base->version;
 	say '   Uses ', join (', ', @{ $base->_upstream_names });
 	say '   Train';
@@ -246,8 +246,8 @@ sub say_repo {
 	my $repo = shift;
 
 	say '   Name ', $repo->name;
-	say $repo->sync
-		? '      Sync '. $repo->sync_subbed
+	say $repo->source
+		? '      Source '. $repo->source_subbed
 		: '      Local';
 	say '      Directory ', $repo->directory;
 	say '      Arch ', $repo->arch;

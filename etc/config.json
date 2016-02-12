@@ -2,11 +2,11 @@
 	"directory": "/home/mstudd/tmp/repo",
 	"base": {
 		"name": "base",
-		"sync": "mirrors.rit.edu::centos/$rel/$repo/$arch",
+		"source": "rsync://mirrors.rit.edu/centos/$rel/$repo/$arch",
 		"upstream": [ "updates" ],
 		"version": "6",
 		"stops": [
-			{ "name": "dev", "version": "6"},
+			{ "name": "dev", "version": "6" },
 			{ "name": "test", "version": "6" },
 			{ "name": "rc", "version": "6.6", "obsolete": true },
 			{ "name": "prod", "version": "6.6", "obsolete": true }
@@ -25,12 +25,19 @@
 	"upstream": [
 		{
 			"name": "epel",
-			"sync": "mirrors.mit.edu::fedora-epel/$rel/$arch",
-			"restrict": [ "FIXME" ]
+			"source": "rsync://mirrors.mit.edu/fedora-epel/$rel/$arch",
+			"restrict": [
+				"libmcrypt",
+				"libmcrypt-devel",
+			]
+		},
+                {
+			"name": "svn-1.8",
+			"source": "http://opensource.wandisco.com/centos/$rel/$repo/RPMS/$arch"
 		},
 		{
 			"name": "pgrpm-92",
-			"sync": "yum.postgresql.org::$repo/redhat/rhel-$rel-$arch"
+			"source": "rsync://yum.postgresql.org/$repo/redhat/rhel-$rel-$arch"
 		},
 		{
 			"name": "recognia"

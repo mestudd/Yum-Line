@@ -9,7 +9,7 @@ use namespace::clean;
 
 extends 'Yum::Line::Train';
 
-has sync => (
+has source => (
 	is => 'ro',
 );
 
@@ -67,7 +67,7 @@ sub _build_upstream {
 					directory => $self->base ."/$_-$v/x86_64",
 					arch => 'x86_64',
 					rel  => $v,
-					$stream->{obsolete} ? () : (sync => $self->sync),
+					$stream->{obsolete} ? () : (source => $self->source),
 				)
 			   	foreach ('os', @{ $self->_upstream_names });
 		}
@@ -81,7 +81,7 @@ sub get_obsolete {
 
 	foreach my $name ($self->upstream_names) {
 		my $upstream = $self->upstream($name);
-		next if ($upstream->sync);
+		next if ($upstream->source);
 
 		say "Upstream $name is obsolete";
 		my $src = sprintf 'http://vault.centos.org/%s/%s/%s',
@@ -92,8 +92,8 @@ sub get_obsolete {
 		my $cmd = "wget --progress=dot:mega --recursive --no-parent --relative --no-host-directories --cut-dirs=3 --no-clobber --directory-prefix=\"$dest/\" \"$src/\"";
 		warn $cmd;
 		my $log = `$cmd`;
-		$upstream->rsync_log($log);
-		$upstream->rsync_status($?);
+		$upstream->sync_log($log);
+		$upstream->sync_status($?);
 
 		print $log;
 	}

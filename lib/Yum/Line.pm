@@ -228,7 +228,7 @@ PostgreSQL 9.2 from their upstream sources. Line local controls locally-built
 packages.
 
 See scripts/yum-line for helpful operations. Typical usage should be init,
-rsync, load dev, promote dev.
+sync, load dev, promote dev.
 
 =head1 CONFIGURATION
 
@@ -249,11 +249,11 @@ L</upstream> object.
 
 The C<name> is the OS train name. See L</trains> for more information.
 
-The C<sync> value defines the upstream location template for the OS
+The C<source> value defines the upstream location template URI for the OS
 repositories. It may contain three special values, which are replaced for the
 specific repository being pulled: C<$rel> will be replaced with the C<version>,
 C<$repo> with the repository name, and C<$arch> with the architecture (currently
-hard-coded to x86_64).
+hard-coded to x86_64). Only rsync and http(s) URIs are supported.
 
 FIXME C<obsolete>/C<vault>/C<archive>
 
@@ -284,10 +284,11 @@ source repositories from which the packages are taken. Each upstream repository
 must have a unique C<name> to identify it. The C<name> is also used as the
 directory name containing the repository on disk.
 
-An upstream repository may have a C<sync> confguration value, which defines the
-location from which the local repository is mirrored. An upstream repository
-without a C<sync> value is not mirrored. This is useful for repositories of
-locally-built packages.
+An upstream repository may have a C<source> confguration value, which defines the
+location template URI from which the local repository is mirrored. It may contain
+the special values as documented for L</base>. An upstream repository without a
+C<source> value is not mirrored. This is useful for repositories of locally-built
+packages.
 
 An upstream repository may have a C<restrict> configuration value. If
 specified, it restricts the packages pulled to those matching. The value is
