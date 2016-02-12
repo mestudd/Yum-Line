@@ -6,16 +6,19 @@ use Yum::Line::ResultSet;
 use Yum::Line::Train;
 
 my $base = './t/repos';
+my $arch = 'arm64';
 my @stops = qw(test rc prod);
 my @repos = qw(train-test train-rc train-prod);
-my ($test_dir, $rc_dir, $prod_dir) = (map "$base/$_/x86_64", @repos);
-my ($up_dir1, $up_dir2) = ("$base/up-1/x86_64", "$base/up-2/x86_64");
+my ($test_dir, $rc_dir, $prod_dir) = (map "$base/$_/$arch", @repos);
+my ($up_dir1, $up_dir2) = ("$base/up-1/$arch", "$base/up-2/$arch");
 my $upstream1 = Yum::Line::Repo->new(directory => $up_dir1);
 my $upstream2 = Yum::Line::Repo->new(directory => $up_dir2);
 my $train = Yum::Line::Train->new(
 	base  => $base,
 	name  => 'train',
 	stops => [ @stops ],
+	_arch => $arch,
+	_rel  => 7,
 	_upstream => { up1 => $upstream1, up2 => $upstream2 },
 );
 
@@ -28,8 +31,9 @@ foreach my $stop (@stops) {
 	isa_ok $repo, 'Yum::Line::Repo', "$stop repo";
 	is $repo->base, $base, "$stop repo base same";
 	is $repo->name, "train-$stop", "$stop repo name";
-	is $repo->arch, 'x86_64', "$stop repo arch";
-	is $repo->directory, "$base/train-$stop/x86_64", "$stop repo directory";
+	is $repo->arch, $arch, "$stop repo arch";
+	is $repo->rel, 7, "$stop repo arch";
+	is $repo->directory, "$base/train-$stop/$arch", "$stop repo directory";
 }
 
 # Test repository initialisation

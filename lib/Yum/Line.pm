@@ -71,6 +71,8 @@ sub _build_trains {
 			%$t,
 			_upstream => { map +($_, $self->_upstream->{$_}),
 					@{ $t->{upstream} } },
+			_arch  => $self->base->arch,
+			_rel   => $self->base->version,
 		);
 	}
 	return \%trains;
@@ -83,8 +85,8 @@ sub _build_upstream {
 	foreach my $u (@{ $config->{upstream} }) {
 		$upstream{$u->{name}} = Yum::Line::Repo->new(
 			base => $config->{directory},
-			arch => 'x86_64',
-			rel  => 6,
+			arch => $self->base->arch,
+			rel  => $self->base->version,
 			%$u,
 		);
 	}
@@ -252,10 +254,12 @@ The C<name> is the OS train name. See L</trains> for more information.
 The C<source> value defines the upstream location template URI for the OS
 repositories. It may contain three special values, which are replaced for the
 specific repository being pulled: C<$rel> will be replaced with the C<version>,
-C<$repo> with the repository name, and C<$arch> with the architecture (currently
-hard-coded to x86_64). Only rsync and http(s) URIs are supported.
+C<$repo> with the repository name, and C<$arch> with the architecture. Only
+rsync and http(s) URIs are supported.
 
-FIXME C<obsolete>/C<vault>/C<archive>
+The C<archive> value defines the upstream location template URI for obsolete
+OS repositories. CentOS, for example, moves version prior to the current
+release to L<http://vault.centos.org/>.
 
 The C<upstream> configuration is an array of OS repositories to use. Do not
 include "os" as it is specially handled.

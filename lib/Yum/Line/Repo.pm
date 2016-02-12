@@ -29,6 +29,10 @@ has directory => (
 	builder => '_build_directory',
 );
 
+has obsolete => (
+	is => 'ro',
+);
+
 has _packages => (
 	is      => 'rw',
 	lazy    => 1,

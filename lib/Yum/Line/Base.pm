@@ -9,17 +9,18 @@ use namespace::clean;
 
 extends 'Yum::Line::Train';
 
+has arch => (
+	is => 'ro',
+);
+
+has archive => (
+	is => 'ro',
+);
+
 has source => (
 	is => 'ro',
 );
 
-has _repos => (
-	is      => 'ro',
-	lazy    => 1,
-	builder => '_build_repos',
-);
-
-# FIXME put upstream in a role
 has '+_upstream' => (
 	lazy    => 1,
 	builder => '_build_upstream',
@@ -43,8 +44,7 @@ sub _build_repos {
 		push @repos, Yum::Line::Repo->new(
 			name => $name,
 			base => $self->base,
-			# FIXME: de-hardcode these
-			arch => 'x86_64',
+			arch => $self->arch,
 			rel  => $self->version,
 		);
 	}
@@ -55,6 +55,7 @@ sub _build_repos {
 sub _build_upstream {
 	my $self = shift;
 
+	my $arch = $self->arch;
 	my (%repos, %seen);
 	foreach my $stream ($self->stop_definitions) {
 		my $v = $stream->{version};
@@ -63,40 +64,17 @@ sub _build_upstream {
 			$repos{"$_-$v"} = Yum::Line::Repo->new(
 					name => $_,
 					base => $self->base,
-					# FIXME: de-hardcode these
-					directory => $self->base ."/$_-$v/x86_64",
-					arch => 'x86_64',
+					directory => $self->base ."/$_-$v/$arch",
+					arch => $arch,
 					rel  => $v,
-					$stream->{obsolete} ? () : (source => $self->source),
+					source => $stream->{obsolete} ? $self->archive : $self->source,
+					obsolete => $stream->{obsolete},
 				)
 			   	foreach ('os', @{ $self->_upstream_names });
 		}
 	}
 
 	return \%repos;
-}
-
-sub get_obsolete {
-	my $self = shift;
-
-	foreach my $name ($self->upstream_names) {
-		my $upstream = $self->upstream($name);
-		next if ($upstream->source);
-
-		say "Upstream $name is obsolete";
-		my $src = sprintf 'http://vault.centos.org/%s/%s/%s',
-			$upstream->rel, $upstream->name, $upstream->arch;
-		my $dest = $upstream->directory;
-
-		# FIXME: all this needs cleaning up
-		my $cmd = "wget --progress=dot:mega --recursive --no-parent --relative --no-host-directories --cut-dirs=3 --no-clobber --directory-prefix=\"$dest/\" \"$src/\"";
-		warn $cmd;
-		my $log = `$cmd`;
-		$upstream->sync_log($log);
-		$upstream->sync_status($?);
-
-		print $log;
-	}
 }
 
 around init => sub {
@@ -109,10 +87,11 @@ around init => sub {
 		my $stop = $definition->{name};
 		my $version = $definition->{version};
 		my $base = $self->base . '/os';
+		my $arch = $self->arch;
 
 		$log .= `mkdir -vp "$base-$stop"`;
-		$log .= `rm -vf "$base-$stop/x86_64"`;
-		$log .= `ln -vs "$base-$version/x86_64/" "$base-$stop/x86_64"`;
+		$log .= `rm -vf "$base-$stop/$arch"`;
+		$log .= `ln -vs "$base-$version/$arch/" "$base-$stop/$arch"`;
 	}
 
 	return $log;
@@ -128,10 +107,11 @@ around load => sub {
 	my ($definition) = grep $stop eq $_->{name}, @{ $self->_stops };
 	my $version = $definition->{version};
 	my $base = $self->base . '/os';
+	my $arch = $self->arch;
 
 	$log .= `mkdir -vp "$base-$stop"`;
-	$log .= `rm -vf "$base-$stop/x86_64"`;
-	$log .= `ln -vs "$base-$version/x86_64/" "$base-$stop/x86_64"`;
+	$log .= `rm -vf "$base-$stop/$arch"`;
+	$log .= `ln -vs "$base-$version/$arch/" "$base-$stop/$arch"`;
 
 	return $log;
 };

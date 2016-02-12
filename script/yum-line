@@ -22,12 +22,11 @@ use Yum::Line;
     # Initialise yum repositories
     yum-line init
 
-    # Mirror obsolete upstream OS repositories
-    # FIXME: called obsolete
-    yum-line sync-obsolete
-
     # Synchronise upstream repositories to local mirrors
     yum-line sync
+
+    # Mirror obsolete upstream OS repositories
+    yum-line sync-obsolete
 
     # Load new packages from upstream mirrors into 'stop' repositories
     yum-line load <stop> [package1] [package2] ...
@@ -182,14 +181,22 @@ if ($command eq 'clean' || $command eq 'cleanable') {
 
 	stop_action($stop, 'promotable', $command);
 
-} elsif ($command eq 'obsolete') {
-	$line->base->get_obsolete;
-
 } elsif ($command eq 'sync') {
-	foreach my $name ($line->upstream_names) {
-		print "Synchronising upstream $name\n";
-		$line->upstream($name)->sync;
-		print $line->upstream($name)->sync_log;
+	foreach my $repo (map $line->upstream($_), $line->upstream_names) {
+		next if ($repo->obsolete);
+
+		say 'Synchronising upstream ', $repo->name;
+		$repo->sync;
+		print $repo->sync_log;
+	}
+
+} elsif ($command eq 'sync-obsolete') {
+	foreach my $repo (map $line->upstream($_), $line->upstream_names) {
+		next unless ($repo->obsolete);
+
+		say 'Synchronising upstream ', $repo->name;
+		$repo->sync;
+		print $repo->sync_log;
 	}
 
 } elsif ($command eq 'dump') {

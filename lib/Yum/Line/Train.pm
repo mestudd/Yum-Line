@@ -8,11 +8,19 @@ use strictures 2;
 use namespace::clean;
 use List::MoreUtils qw(distinct after_incl);
 
+has _arch => (
+	is => 'ro',
+);
+
 has base => (
 	is => 'ro',
 );
 
 has name => (
+	is => 'ro',
+);
+
+has _rel => (
 	is => 'ro',
 );
 
@@ -28,7 +36,6 @@ has _stops => (
 	init_arg => 'stops',
 );
 
-# FIXME put upstream in a role
 has _upstream => (
 	is => 'ro',
 );
@@ -41,9 +48,8 @@ sub _build_repos {
 		push @repos, Yum::Line::Repo->new(
 			name => $name,
 			base => $self->base,
-			# FIXME: de-hardcode these
-			arch => 'x86_64',
-			rel  => 6,
+			arch => $self->_arch,
+			rel  => $self->_rel,
 		);
 	}
 	return \@repos;
