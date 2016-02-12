@@ -4,6 +4,7 @@ use v5.10.0;
 use JSON::XS qw(decode_json);
 use Yum::Line::Base;
 use Yum::Line::Repo;
+use Yum::Line::ResultSet;
 use Yum::Line::Train;
 
 use Moo;
@@ -90,6 +91,82 @@ sub _build_upstream {
 	return \%upstream;
 }
 
+sub clean {
+	my ($self, $stop, $results) = @_;
+
+	return $self->_execute('clean', $stop, $results);
+}
+
+sub cleanable {
+	my ($self, $stop, $results) = @_;
+
+	$results = $self->_gather('cleanable', $stop, $results);
+
+	return $results;
+}
+
+sub _execute {
+	my ($self, $type, $stop, $results) = @_;
+
+	my $log = '';
+	foreach my $train ($self->base, map $self->train($_), $self->train_names) {
+		$log .= $train->$type($stop, $results);
+	}
+
+	return $log;
+}
+
+sub _gather {
+	my ($self, $type, $stop, $results) = @_;
+
+	$results = Yum::Line::ResultSet->new() if (!$results);
+	foreach my $train ($self->base, map $self->train($_), $self->train_names) {
+		$train->$type($stop, $results);
+	}
+
+	return $results;
+}
+
+=for comment
+sub list {
+	my ($self, $type, $name, $results) = @_;
+
+	# FIXME: $name should be either upstream or stop
+	# action different between the two
+	$results = $self->_gather('list', $name, $results);
+
+	return $results;
+}
+=cut
+
+sub load {
+	my ($self, $stop, $results) = @_;
+
+	return $self->_execute('load', $stop, $results);
+}
+
+sub loadable {
+	my ($self, $stop, $results) = @_;
+
+	$results = $self->_gather('loadable', $stop, $results);
+
+	return $results;
+}
+
+sub promotable {
+	my ($self, $stop, $results) = @_;
+
+	$results = $self->_gather('promotable', $stop, $results);
+
+	return $results;
+}
+
+sub promote {
+	my ($self, $stop, $results) = @_;
+
+	return $self->_execute('promote', $stop, $results);
+}
+
 sub _read_json_file {
 	my ($self, $file) = @_;
 
@@ -116,14 +193,12 @@ sub upstream {
 	my ($self, $name) = @_;
 
 	return $self->_upstream->{$name} || $self->base->upstream($name);
-	return $self->_upstream->{$name};
 }
 
 sub upstream_names {
 	my $self = shift;
 
 	return sort keys %{ $self->_upstream }, $self->base->upstream_names;
-	return sort keys %{ $self->_upstream };
 }
 
 1;

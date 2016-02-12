@@ -1,14 +1,15 @@
 package Yum::Line::Repo;
 use v5.10.0;
 
-use List::Util qw(first);
 use Path::Class::Dir;
 use Path::Class::File;
 use Yum::Line::Package;
 
 use Moo;
 use strictures 2;
-#use namespace::clean;
+use namespace::clean;
+
+use List::Util qw(first);
 
 has name => (
 	is => 'ro',
@@ -69,8 +70,9 @@ sub _build_packages {
 			$match->add_package($p);
 		} else {
 			my $entry = Yum::Line::Repo::Entry->new(
-				name    => $p->name,
-				version => $p->full_version,
+				name      => $p->name,
+				repo_name => $self->name,
+				version   => $p->full_version,
 			);
 			$entry->add_package($p);
 
@@ -197,6 +199,7 @@ use overload 'cmp' => 'compare';
 
 has name => (is => 'ro');
 has _packages => (is => 'ro', default => sub { {} });
+has repo_name => (is => 'ro');
 has version => (is => 'ro');
 
 sub add_package {

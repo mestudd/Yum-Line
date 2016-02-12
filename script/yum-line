@@ -138,41 +138,10 @@ my $line = Yum::Line->new_with_options;
 
 my $command = shift;
 
-if ($command eq 'cleanable') {
+if ($command eq 'clean' || $command eq 'cleanable') {
 	my $stop = shift;
 
-	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
-		say 'Into ', $train->name;
-		say_package_header();
-		foreach my $package ($train->cleanable($stop)) {
-			say_package($package);
-		}
-	}
-
-} elsif ($command eq 'clean') {
-	my $stop = shift;
-
-	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
-		say 'Into ', $train->name;
-		say_package_header();
-		foreach my $package ($train->cleanable($stop)) {
-			say_package($package);
-		}
-	}
-
-	my $answer;
-	while (1) {
-		print 'Is this ok [y/N] ';
-		$answer = lc(ReadLine(0));
-		chomp $answer;
-		$answer = 'n' if (!$answer);
-		last if ($answer eq 'n' || $answer eq 'y');
-	}
-	if ($answer eq 'y') {
-		foreach my $train ($line->base, map $line->train($_), $line->train_names) {
-			print $train->clean($stop);
-		}
-	}
+	stop_action($stop, 'cleanable', $command);
 
 } elsif ($command eq 'init') {
 	my $stop = shift;
@@ -201,85 +170,18 @@ if ($command eq 'cleanable') {
 		my @all = $repo->package_all($name);
 		my $package = shift @all;
 		say_package($package);
-		printf '  %-50s %-15s %-15s %-12s'."\n",
-				'',
-				$_->version,
-				$_->release,
-				$_->arch
-			foreach (@all);
+		say_package($_, 1) foreach (@all);
 	}
 
-} elsif ($command eq 'loadable') {
+} elsif ($command eq 'load' || $command eq 'loadable') {
 	my $stop = shift;
 
-	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
-		say 'Into ', $train->name;
-		say_package_header();
-		foreach my $package ($train->loadable($stop)) {
-			say_package($package);
-		}
-	}
+	stop_action($stop, 'loadable', $command);
 
-} elsif ($command eq 'load') {
+} elsif ($command eq 'promote' || $command eq 'promotable') {
 	my $stop = shift;
 
-	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
-		say 'Into ', $train->name;
-		say_package_header();
-		foreach my $package ($train->loadable($stop)) {
-			say_package($package);
-		}
-	}
-
-	my $answer;
-	while (1) {
-		print 'Is this ok [y/N] ';
-		$answer = lc(ReadLine(0));
-		chomp $answer;
-		$answer = 'n' if (!$answer);
-		last if ($answer eq 'n' || $answer eq 'y');
-	}
-	if ($answer eq 'y') {
-		foreach my $train ($line->base, map $line->train($_), $line->train_names) {
-			print $train->load($stop);
-		}
-	}
-
-} elsif ($command eq 'promotable') {
-	my $stop = shift;
-
-	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
-		say 'Into ', $train->name;
-		say_package_header();
-		foreach my $package ($train->promotable($stop)) {
-			say_package($package);
-		}
-	}
-
-} elsif ($command eq 'promote') {
-	my $stop = shift;
-
-	foreach my $train ($line->base, map $line->train($_), $line->train_names) {
-		say 'Into ', $train->name;
-		say_package_header();
-		foreach my $package ($train->promotable($stop)) {
-			say_package($package);
-		}
-	}
-
-	my $answer;
-	while (1) {
-		print 'Is this ok [y/N] ';
-		$answer = lc(ReadLine(0));
-		chomp $answer;
-		$answer = 'n' if (!$answer);
-		last if ($answer eq 'n' || $answer eq 'y');
-	}
-	if ($answer eq 'y') {
-		foreach my $train ($line->base, map $line->train($_), $line->train_names) {
-			print $train->promote($stop);
-		}
-	}
+	stop_action($stop, 'promotable', $command);
 
 } elsif ($command eq 'obsolete') {
 	$line->base->get_obsolete;
@@ -291,12 +193,8 @@ if ($command eq 'cleanable') {
 	}
 
 } elsif ($command eq 'dump') {
-	use Data::Dumper;
-#$line->_upstream;
-#warn Dumper($line);
 	say 'Config file: ', $line->config_file;
 	say 'Base';
-#warn Dumper($line->base);
 	say_base($line->base);
 
 	say "\nUpstream Repositories";
@@ -327,7 +225,7 @@ sub say_base {
 }
 
 sub say_package {
-	my ($package, $secondary) = shift;
+	my ($package, $secondary) = @_;
 
 	foreach my $file ($package->packages) {
 		say sprintf '  %-50s %-15s %-15s %-12s %-10s %s',
@@ -358,10 +256,50 @@ sub say_repo {
 		if ($repo->restrict);
 }
 
+sub say_result {
+	my $result = shift;
+
+	foreach my $train ($result->trains) {
+		say 'For train ', $train;
+		say_package_header();
+		foreach my $package ($result->packages($train)) {
+			say_package($package);
+		}
+	}
+}
+
 sub say_train {
 	my $train = shift;
 
 	say '   Name ', $train->name;
 	say '      Base ', $train->base;
 	say '      Uses ', join (', ', $train->upstream_names);
+}
+
+sub stop_action {
+	my ($stop, $check, $command) = @_;
+
+	my $candidates = $line->$check($stop);
+	say_result($candidates);
+	exit if ($check eq $command);
+
+	my $answer = y_n('Is this OK?');
+	if ($answer eq 'y') {
+		print $line->$command($stop, $candidates);
+	}
+}
+
+sub y_n {
+	my $question = shift;
+
+	my $answer;
+	while (1) {
+		print "$question [y/N] ";
+		$answer = lc(ReadLine(0));
+		chomp $answer;
+		$answer = 'n' if (!$answer);
+		last if ($answer eq 'n' || $answer eq 'y');
+	}
+
+	return $answer;
 }

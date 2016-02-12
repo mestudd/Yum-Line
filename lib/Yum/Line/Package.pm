@@ -37,24 +37,24 @@ has version => (
 sub compare {
 	my ($self, $other, $swap) = @_;
 	my $result = rpmvercmp(
-		$self->_compare_name,
-		$other->_compare_name
+		$self->long_name,
+		$other->long_name
 	);
 	$result = -$result if $swap;
 
 	return $result;
 }
 
-sub _compare_name {
-	my $self = shift;
-
-	return sprintf '%s-%s', $self->name, $self->full_version;
-}
-
 sub full_version {
 	my $self = shift;
 
 	return sprintf '%s-%s', $self->version, $self->release;
+}
+
+sub long_name {
+	my $self = shift;
+
+	return sprintf '%s-%s', $self->name, $self->full_version;
 }
 
 sub new_file {

@@ -50,22 +50,27 @@ sub _build_repos {
 }
 
 sub clean {
-	my ($self, $stop) = @_;
+	my ($self, $stop, $results) = @_;
 
-	my @packages = $self->cleanable($stop);
+	my @packages = $results->packages($self->name);
+	my %repos;
 	my $log = '';
 	foreach my $package (@packages) {
+		$repos{$package->repo_name} = 1;
 		$log .= $package->remove;
 	}
 
-	my $from = $self->repo($stop)->directory;
-	$log .= `createrepo --update --workers 4 $from`;
+	foreach my $name (sort keys %repos) {
+		my ($repo) = (grep $name eq $_->name, @{ $self->_repos // [] });
+		my $from = $repo->directory;
+		$log .= `createrepo --update --workers 4 $from`;
+	}
 
 	return $log;
 }
 
 sub cleanable {
-	my ($self, $stop) = @_;
+	my ($self, $stop, $results) = @_;
 	die "Invalid stop $stop\n"
 		unless (grep $stop eq $_, $self->stops);
 
@@ -75,7 +80,7 @@ sub cleanable {
 
 	my @clean;
 	foreach my $name ($from->package_names) {
-		my $further = $self->package($name, @check);
+		my $further = @check ? $self->package($name, @check) : undef;
 		my ($candidate, @rest) = $from->package_all($name);
 
 		push @clean, @rest;
@@ -84,7 +89,9 @@ sub cleanable {
 		}
 	}
 
-	return @clean;
+	if (@clean) {
+		$results->add_train($self->name, @clean);
+	}
 }
 
 sub init {
@@ -96,10 +103,21 @@ sub init {
 	return $log
 }
 
-sub load {
-	my ($self, $stop) = @_;
+sub list {
+	my ($self, $stop, $results) = @_;
 
-	my @packages = $self->loadable($stop);
+	my $repo = $self->repo($stop);
+
+	my @names = $repo->package_names;
+	if (@names) {
+		$results->add_train($self->name, map $repo->package($_), @names);
+	}
+}
+
+sub load {
+	my ($self, $stop, $results) = @_;
+
+	my @packages = $results->packages($self->name);
 	my $log = '';
 	my $to = $self->repo($stop)->directory;
 	foreach my $package (@packages) {
@@ -112,7 +130,7 @@ sub load {
 }
 
 sub loadable {
-	my ($self, $stop) = @_;
+	my ($self, $stop, $results) = @_;
 	die "Invalid stop $stop\n"
 		unless (grep $stop eq $_, $self->stops);
 
@@ -123,7 +141,6 @@ sub loadable {
 
 	my @load;
 	foreach my $name (@packages) {
-$DB::single=1 if ($name eq 'wxGTK');
 		my $loaded = $self->package($name, @to);
 		my $candidate = $self->package($name, @from);
 
@@ -132,7 +149,9 @@ $DB::single=1 if ($name eq 'wxGTK');
 		}
 	}
 
-	return @load;
+	if (@load) {
+		$results->add_train($self->name, @load);
+	}
 }
 
 # get the most recent package in the train
@@ -140,7 +159,7 @@ $DB::single=1 if ($name eq 'wxGTK');
 sub package {
 	my ($self, $name, @repos) = @_;
 
-	@repos = values %{ $self->_repos } if (!@repos);
+	@repos = @{ $self->_repos } if (!@repos);
 
 	my $package;
 	foreach my $r (@repos) {
@@ -154,10 +173,14 @@ sub package {
 }
 
 sub promote {
-	my ($self, $stop) = @_;
+	my ($self, $stop, $results) = @_;
+	die "Invalid stop $stop\n"
+		unless (grep $stop eq $_, $self->stops);
+	die "Cannot promote last stop $stop\n"
+		if ($stop eq ($self->stops)[-1]);
 
+	my @packages = $results->packages($self->name);
 	my @to = after_incl { $_ eq $stop } $self->stops;
-	my @packages = $self->promotable($stop);
 	my $log = '';
 	my $to = $self->repo($to[1])->directory;
 	foreach my $package (@packages) {
@@ -170,7 +193,7 @@ sub promote {
 }
 
 sub promotable {
-	my ($self, $stop) = @_;
+	my ($self, $stop, $results) = @_;
 	die "Invalid stop $stop\n"
 		unless (grep $stop eq $_, $self->stops);
 	die "Cannot promote last stop $stop\n"
@@ -180,17 +203,19 @@ sub promotable {
 		after_incl { $_ eq $stop } $self->stops;
 	my $from = shift @check;
 
-	my @load;
+	my @promote;
 	foreach my $name ($from->package_names) {
 		my $loaded = $self->package($name, @check);
 		my $candidate = $from->package($name);
 
 		if (!defined($loaded) || $candidate gt $loaded) {
-			push @load, $candidate;
+			push @promote, $candidate;
 		}
 	}
 
-	return @load;
+	if (@promote) {
+		$results->add_train($self->name, @promote);
+	}
 }
 
 sub stops {
