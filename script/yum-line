@@ -213,8 +213,10 @@ if ($command eq 'clean' || $command eq 'cleanable') {
 	foreach my $name ($line->train_names) {
 		say_train($line->train($name));
 	}
+} elsif ($command) {
+	die "Unknown command \"$command\"\n";
 } else {
-	die "must pass command\n";
+	die "Must pass command\n";
 }
 exit 0;
 
