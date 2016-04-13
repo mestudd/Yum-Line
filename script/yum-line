@@ -12,6 +12,7 @@ use v5.10.0;
 
 use Term::ReadKey;
 use Yum::Line;
+use Yum::Line::ResultSet;
 
 =head1 SYNOPSIS
 
@@ -139,7 +140,7 @@ my $command = shift;
 if ($command eq 'clean' || $command eq 'cleanable') {
 	my $stop = shift;
 
-	stop_action($stop, 'cleanable', $command);
+	stop_action($stop, 'cleanable', $command, @ARGV);
 
 } elsif ($command eq 'init') {
 	my $stop = shift;
@@ -174,12 +175,12 @@ if ($command eq 'clean' || $command eq 'cleanable') {
 } elsif ($command eq 'load' || $command eq 'loadable') {
 	my $stop = shift;
 
-	stop_action($stop, 'loadable', $command);
+	stop_action($stop, 'loadable', $command, @ARGV);
 
 } elsif ($command eq 'promote' || $command eq 'promotable') {
 	my $stop = shift;
 
-	stop_action($stop, 'promotable', $command);
+	stop_action($stop, 'promotable', $command, @ARGV);
 
 } elsif ($command eq 'sync') {
 	foreach my $repo (map $line->upstream($_), $line->upstream_names) {
@@ -220,6 +221,21 @@ if ($command eq 'clean' || $command eq 'cleanable') {
 }
 exit 0;
 
+
+sub filtered_results {
+	my (@filter_specs) = @_;
+
+	my @filters;
+	foreach my $spec (@filter_specs) {
+		die "Invalid filter: $spec\n" unless ($spec =~ /^[-?*\w]+$/);
+		$spec =~ s/\?/./g;
+		$spec =~ s/\*/.*/g;
+		push @filters, sub { $_[0]->name =~ /^$spec$/; };
+	}
+	my $results = Yum::Line::ResultSet->new(
+		filters => \@filters,
+	);
+}
 
 sub say_base {
 	my $base = shift;
@@ -286,9 +302,11 @@ sub say_train {
 }
 
 sub stop_action {
-	my ($stop, $check, $command) = @_;
+	my ($stop, $check, $command, @filters) = @_;
 
-	my $candidates = $line->$check($stop);
+	my $results = filtered_results(@filters);
+
+	my $candidates = $line->$check($stop, $results);
 	say_result($candidates);
 	exit if ($check eq $command);
 
