@@ -50,8 +50,8 @@ Options:
     --config                        File containing line configuration. See L<Yum::Line>for more information.
     FIXME: --help                          Show help text.
     FIXME: --train=<train1>,<train2>,...   Only work on listed trains
-    FIXME: -y, --assumeyes                 Assume yes; assume the answer to any question asked is 'yes'
-    FIXME: -n, --assumeno                  Assume no; assume the answer to any question asked is 'no'
+    -y, --assumeyes                 Assume yes; assume the answer to any question asked is 'yes'
+    -n, --assumeno                  Assume no; assume the answer to any question asked is 'no'
 
 =head1 COMMANDS
 
@@ -318,6 +318,9 @@ sub stop_action {
 
 sub y_n {
 	my $question = shift;
+
+	return 'n' if ($line->assumeno);
+	return 'y' if ($line->assumeyes);
 
 	my $answer;
 	while (1) {
