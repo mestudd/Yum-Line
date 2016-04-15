@@ -11,27 +11,8 @@ use Moo;
 use strictures 2;
 use namespace::clean;
 
-# Keep these in namespace
-use MooX::Options  protect_argv => 0;
 
 our $VERSION = '0.0.4';
-
-# FIXME: split option stuff into separate object?
-option assumeno => (
-	is    => 'ro',
-	short => 'n',
-);
-
-option assumeyes => (
-	is    => 'ro',
-	short => 'y',
-);
-
-option config_file => (
-	is      => 'ro',
-	format  => 's',
-	default => './etc/config.json',
-);
 
 has base => (
 	is      => 'ro',

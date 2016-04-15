@@ -14,44 +14,116 @@ use Term::ReadKey;
 use Yum::Line;
 use Yum::Line::ResultSet;
 
+package Yum::Line::Script;
+
+use JSON::XS qw(decode_json);
+
+use Moo;
+use MooX::Cmd;
+use MooX::Options protect_argv => 0;
+
+extends 'Yum::Line';
+
+option assumeno => (
+	is    => 'ro',
+	short => 'n',
+);
+
+option assumeyes => (
+	is    => 'ro',
+	short => 'y',
+);
+
+option configfile => (
+	is      => 'ro',
+	format  => 's',
+	short   => 'c',
+	default => './etc/config.json',
+);
+
+option disabletrain => (
+	is        => 'ro',
+	format    => 's@',
+	autosplit => ',',
+	short     => 't',
+	default   => sub { [] },
+);
+
+sub _build_config {
+	my $self = shift;
+	return $self->_read_json_file($self->configfile);
+}
+
+around [qw(options_help options_man)] => sub {
+	my ( $orig, $self, $code, @message ) = @_;
+	system 'perldoc', __FILE__;
+	exit($code // 0);
+};
+
+around [qw(options_short_usage options_usage)] => sub {
+	my ( $orig, $self, $code, $usage ) = @_;
+	say "USAGE: yum-line [-chnty] <command> [args1] [arg2] ...";
+	say "COMMANDS AVAILABLE: clean, cleanable, dump, init, list, listall, load, loadable,";
+	say	"    promotable, promote, sync, sync-obsolete";
+	exit($code // 0);
+};
+
 =head1 SYNOPSIS
 
     # Execute command 'command' with options and additional, command specific
     # arguments
     yum-line [options] <command> [arg1] [arg2] ...
-
+    
     # Initialise yum repositories
     yum-line init
-
+    
     # Synchronise upstream repositories to local mirrors
     yum-line sync
-
+    
     # Mirror obsolete upstream OS repositories
     yum-line sync-obsolete
-
+    
     # Load new packages from upstream mirrors into 'stop' repositories
     yum-line load <stop> [package1] [package2] ...
-
+    
     # Promote packages from 'stop' to next stage repositories
     yum-line promote <stop> [package1] [package2] ...
-
+    
     # Clean older packages from 'stop' repositories
     yum-line clean <stop> [package1] [package2] ...
-
+    
     # List packages available from repository
     # FIXME: non-upstream repos
     yum-line list <repo> [package1] [package2] ...
-
+    
     # Dump understood configuration
     yum-line dump
 
-Options:
+=head1 OPTIONS
 
-    --config                        File containing line configuration. See L<Yum::Line>for more information.
-    FIXME: --help                          Show help text.
-    FIXME: --train=<train1>,<train2>,...   Only work on listed trains
-    -y, --assumeyes                 Assume yes; assume the answer to any question asked is 'yes'
-    -n, --assumeno                  Assume no; assume the answer to any question asked is 'no'
+=over 4
+
+=item -c --configfile
+
+File containing repo line configuration. See L<Yum::Line> for more information.
+
+=item -t --disabletrain=<train1>,<train2>,...
+
+Ignore trains matching the listed trains or train globs.
+
+=item -h --help
+
+Show help text.
+
+=item -n --assumeno
+
+Assume no; assume the answer to any question asked is "no".
+
+=item -y --assumeyes
+
+Assume yes; assume the answer to any question asked is "yes".
+
+=back
 
 =head1 COMMANDS
 
@@ -133,7 +205,9 @@ useful for confirming that the configuration file is correct.
 
 =cut
 
-my $line = Yum::Line->new_with_options;
+package main;
+
+my $line = Yum::Line::Script->new_with_options;
 
 my $command = shift;
 
@@ -201,7 +275,7 @@ if ($command eq 'clean' || $command eq 'cleanable') {
 	}
 
 } elsif ($command eq 'dump') {
-	say 'Config file: ', $line->config_file;
+	say 'Config file: ', $line->configfile;
 	say 'Base';
 	say_base($line->base);
 
