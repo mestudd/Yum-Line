@@ -55,7 +55,7 @@ sub _build_config {
 sub _build_trains {
 	my $self = shift;
 	my $config = $self->_config;
-	my %trains;
+	my %trains = ( base => $self->base );
 	foreach my $t (@{ $config->{trains} }) {
 		$trains{$t->{name}} = Yum::Line::Train->new(
 			base  => $config->{directory},
@@ -103,7 +103,8 @@ sub _execute {
 	my ($self, $type, $stop, $results) = @_;
 
 	my $log = '';
-	foreach my $train ($self->base, map $self->train($_), $self->train_names) {
+	foreach my $train (map $self->train($_), $self->train_names) {
+		next unless ($results->want_train($train));
 		$log .= $train->$type($stop, $results);
 	}
 
@@ -114,7 +115,8 @@ sub _gather {
 	my ($self, $type, $stop, $results) = @_;
 
 	$results = Yum::Line::ResultSet->new() if (!$results);
-	foreach my $train ($self->base, map $self->train($_), $self->train_names) {
+	foreach my $train (map $self->train($_), $self->train_names) {
+		next unless ($results->want_train($train));
 		$train->$type($stop, $results);
 	}
 

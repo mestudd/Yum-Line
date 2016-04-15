@@ -299,15 +299,26 @@ exit 0;
 sub filtered_results {
 	my (@filter_specs) = @_;
 
-	my @filters;
-	foreach my $spec (@filter_specs) {
+	my $re = sub {
+		my $spec = shift;
 		die "Invalid filter: $spec\n" unless ($spec =~ /^[-?*\w]+$/);
 		$spec =~ s/\?/./g;
 		$spec =~ s/\*/.*/g;
-		push @filters, sub { $_[0]->name =~ /^$spec$/; };
+		return qr/^$spec$/;
+	};
+
+	my @filters;
+	foreach my $spec (@filter_specs) {
+		$spec = &$re($spec);
+		push @filters, sub { $_[0]->name =~ $spec; };
 	}
+	my @disable_trains = map &$re($_), @{ $line->disabletrain };
 	my $results = Yum::Line::ResultSet->new(
 		filters => \@filters,
+		train_filters => [sub {
+			my $train = shift;
+			return !grep $train->name =~ $_, @disable_trains;
+		}],
 	);
 }
 

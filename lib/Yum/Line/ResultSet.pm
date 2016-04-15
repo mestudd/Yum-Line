@@ -8,8 +8,13 @@ use namespace::clean;
 # FIXME: doc
 # filter is function to apply against package
 # if any filter matches, package passes filters
-# i.e. all filters mustnot match to exclude package
+# i.e. all filters must not match to exclude package
 has filters => (
+	is      => 'ro',
+	default => sub { [] },
+);
+
+has train_filters => (
 	is      => 'ro',
 	default => sub { [] },
 );
@@ -21,6 +26,9 @@ has _trains => (
 
 sub add_train {
 	my ($self, $train, @packages) = @_;
+
+	# ignore unwanted trains
+	return unless ($self->want_train($train));
 
 	# add all when no filters
 	if (!scalar @{ $self->filters }) {
@@ -53,6 +61,20 @@ sub trains {
 	my ($self) = @_;
 
 	return sort keys %{ $self->_trains };
+}
+
+sub want_train {
+	my ($self, $train) = @_;
+
+	return 1 if (!scalar @{ $self->filters });
+
+	foreach my $filter (@{ $self->train_filters }) {
+		if (&$filter($train)) {
+			return 1;
+		}
+	}
+
+	return 0;
 }
 
 1;
