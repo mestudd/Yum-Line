@@ -162,7 +162,10 @@ sub sync {
 	die "Could not create $dest\n" if ($? << 8 != 0); 
 
 	my $cmd;
-	if ($src =~ /^rsync:/) {
+	if ($src =~ s/^local://) {
+		$cmd = "rsync -avz --delete $src/ $dest/";
+
+	} elsif ($src =~ /^rsync:/) {
 		$cmd = "rsync -avz --delete $src/ $dest/";
 
 	} elsif ($src =~ /^https?:/) {
@@ -175,22 +178,20 @@ sub sync {
 		$cmd = "wget $options --cut-dirs=$dirs --directory-prefix=$dest $src";
 	}
 
-	warn $cmd;
 	my $log .= `$cmd`;
 	$self->sync_log($log);
 	$self->sync_status($?);
 
+	$self->scan_repo;
+
 	return ($self->sync_status >> 8) == 0;
 }
 
-=for comment
-FIXME: this is wrong
 sub scan_repo {
 	my $self = shift;
 
-	$self->_packages([ $self->_read_dir(Path::Class::Dir->new($self->directory)) ]);
+	$self->_packages($self->_build_packages);
 }
-=cut
 
 sub source_subbed {
 	my $self = shift;
