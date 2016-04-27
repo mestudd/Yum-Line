@@ -4,8 +4,7 @@ requires 'List::MoreUtils';
 requires 'Moo';
 requires 'MooX::Options';
 requires 'namespace::clean';
-requires 'Path::Class::Dir';
-requires 'Path::Class::File';
+requires 'Path::Tiny';
 requires 'RPM::VersionSort';
 requires 'strictures';
 

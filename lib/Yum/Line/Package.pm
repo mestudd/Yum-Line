@@ -1,7 +1,6 @@
 package Yum::Line::Package;
 use v5.10.0;
 
-use Path::Class::File;
 use RPM::VersionSort;
 
 use Moo;

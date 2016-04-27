@@ -1,8 +1,7 @@
 package Yum::Line::Repo;
 use v5.10.0;
 
-use Path::Class::Dir;
-use Path::Class::File;
+use Path::Tiny;
 use Yum::Line::Package;
 
 use Moo;
@@ -63,7 +62,7 @@ has sync_status => (
 sub _build_packages {
 	my $self = shift;
 
-	my @raw = $self->_read_dir(Path::Class::Dir->new($self->directory));
+	my @raw = $self->_read_dir(path($self->directory));
 	my %packages;
 	foreach my $p (@raw) {
 		next if ($self->_ignore_rpm($p));
@@ -135,12 +134,12 @@ sub _read_dir {
 
 	my @packages;
 	$dir->mkpath();
-	$dir->recurse(callback => sub {
-		my $file = shift;
+	my $iter = $dir->iterator({ recurse => 1 });
+	while (my $file = $iter->()) {
 		if (!$file->is_dir && $file->basename =~ /\.rpm$/) {
 			push @packages, Yum::Line::Package->new_file($file, $self->name);
 		}
-	});
+	}
 
 	return @packages;
 }

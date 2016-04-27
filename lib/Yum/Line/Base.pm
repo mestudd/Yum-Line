@@ -1,8 +1,6 @@
 package Yum::Line::Base;
 use v5.10.0;
 
-use Path::Class::File;
-
 use Moo;
 use strictures 2;
 use namespace::clean;
