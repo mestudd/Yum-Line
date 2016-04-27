@@ -1,6 +1,8 @@
 Revision history for Yum-Line
 
 {{$NEXT}}
+
+0.1.0  2016-04-27 15:46:23 EDT
         - Improved documentation
         - Rationalised commands and configuration
         - Behave as documented
