@@ -80,7 +80,7 @@ sub want_package {
 sub want_train {
 	my ($self, $train) = @_;
 
-	return 1 if (!scalar @{ $self->filters });
+	return 1 if (!scalar @{ $self->train_filters });
 
 	foreach my $filter (@{ $self->train_filters }) {
 		if (&$filter($train)) {

@@ -23,6 +23,8 @@ my $filtered = Yum::Line::ResultSet->new(
 );
 is 1, $filtered->want_train('test');
 is 0, $filtered->want_train('other');
+is 1, $filtered->want_package('want');
+is 0, $filtered->want_package('b');
 
 $filtered->add_train('test', 'a', 'b');
 $filtered->add_train('prod', 'a', 'c');
