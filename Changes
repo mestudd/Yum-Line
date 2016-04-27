@@ -1,6 +1,10 @@
 Revision history for Yum-Line
 
 {{$NEXT}}
+        - Improved documentation
+        - Rationalised commands and configuration
+        - Behave as documented
+        - Support HTTP(S) sources
 
 0.0.4  2016-01-12 16:25:01 EST
         - Support repos with multi-arch packages
