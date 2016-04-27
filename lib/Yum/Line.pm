@@ -123,18 +123,6 @@ sub _gather {
 	return $results;
 }
 
-=for comment
-sub list {
-	my ($self, $type, $name, $results) = @_;
-
-	# FIXME: $name should be either upstream or stop
-	# action different between the two
-	$results = $self->_gather('list', $name, $results);
-
-	return $results;
-}
-=cut
-
 sub load {
 	my ($self, $stop, $results) = @_;
 
@@ -171,6 +159,34 @@ sub _read_json_file {
 	my $json_text = <$fh>;
 	close ($fh);
 	return decode_json($json_text);
+}
+
+sub repo {
+	my ($self, $name) = @_;
+
+	my $repo = $self->upstream($name);
+	return $repo if (defined $repo);
+
+	my @pieces = split('-', $name);
+	my $stop = pop @pieces;
+	my $train = $self->train(join('-', @pieces));
+	die "Invalid repo $name\n" if (!defined $train);
+
+	$repo = eval { $train->repo($stop); };
+	die "Invalid repo $name\n" if ($@ || !defined $train);
+
+	return $repo;
+}
+
+sub repo_names {
+	my $self = shift;
+
+	my @train_repos;
+	foreach my $train (values %{ $self->_trains }) {
+		push @train_repos, map $train->name .'-'.  $_, $train->stops;
+	}
+
+	return sort $self->upstream_names, @train_repos;
 }
 
 sub train {

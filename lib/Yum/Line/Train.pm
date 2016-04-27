@@ -240,14 +240,6 @@ sub repo {
 	return $repo[0];
 }
 
-=for comment
-sub repo_names {
-	my $self = shift;
-
-	return @{ $self->_repos // [] };
-}
-=cut
-
 sub upstream {
 	my ($self, $name) = @_;
 

@@ -93,7 +93,6 @@ around [qw(options_short_usage options_usage)] => sub {
     yum-line clean <stop> [package1] [package2] ...
     
     # List packages available from repository
-    # FIXME: non-upstream repos
     yum-line list <repo> [package1] [package2] ...
     
     # Dump understood configuration
@@ -224,24 +223,18 @@ if ($command eq 'clean' || $command eq 'cleanable') {
 		print $train->init;
 	}
 
-} elsif ($command eq 'list') {
+} elsif ($command eq 'list' || $command eq 'listall') {
 	my $name = shift;
-	my $repo = $line->upstream($name);
+	my $repo = $line->repo($name);
 
-	say_package_header();
-	foreach my $name ($repo->package_names) {
-		my $package = $repo->package($name);
-		say_package($package);
-	}
-
-} elsif ($command eq 'listall') {
-	my $name = shift;
-	my $repo = $line->upstream($name);
+	my $results = filtered_results(@ARGV);
 
 	say_package_header();
 	foreach my $name ($repo->package_names) {
 		my @all = $repo->package_all($name);
 		my $package = shift @all;
+		next if (!$results->want_package($package));
+		@all = () unless ($command eq 'listall');
 		say_package($package);
 		say_package($_, 1) foreach (@all);
 	}

@@ -63,6 +63,20 @@ sub trains {
 	return sort keys %{ $self->_trains };
 }
 
+sub want_package {
+	my ($self, $package) = @_;
+
+	return 1 if (!scalar @{ $self->filters });
+
+	foreach my $filter (@{ $self->filters }) {
+		if (&$filter($package)) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 sub want_train {
 	my ($self, $train) = @_;
 
