@@ -2,6 +2,9 @@ Revision history for Yum-Line
 
 {{$NEXT}}
 
+0.1.1  2016-06-14 17:05:48 EDT
+        - Properly record dependency on Test::Fatal
+
 0.1.0  2016-04-27 15:46:23 EDT
         - Improved documentation
         - Rationalised commands and configuration
