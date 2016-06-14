@@ -1,6 +1,5 @@
 use strict;
 use Test::More;
-use Test::Fatal;
 use Yum::Line::Repo;
 
 my $base = './t/repos';
