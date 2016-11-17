@@ -175,6 +175,16 @@ sub sync {
 		$dirs -= 3; # between scheme and host and at end of URI
 
 		$cmd = "wget $options --cut-dirs=$dirs --directory-prefix=$dest $src";
+
+	} elsif ($src =~ s/^reposync://) {
+		my $options = '--arch=' . $self->arch . " --delete --downloadcomps " .
+			"--cachedir=$dest/repodata --download_path=$dest --norepopath";
+
+		$cmd = "reposync $options --repoid=$src && mv $dest/repodata/$src/* $dest/repodata";
+
+	} else {
+		die "Unknown source type: $src\n";
+
 	}
 
 	my $log .= `$cmd`;
