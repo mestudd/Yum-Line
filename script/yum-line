@@ -210,7 +210,10 @@ my $line = Yum::Line::Script->new_with_options;
 
 my $command = shift;
 
-if ($command eq 'clean' || $command eq 'cleanable') {
+if (!$command) {
+	die "Must pass command\n";
+
+} elsif ($command eq 'clean' || $command eq 'cleanable') {
 	my $stop = shift;
 
 	stop_action($stop, 'cleanable', $command, @ARGV);
@@ -281,10 +284,8 @@ if ($command eq 'clean' || $command eq 'cleanable') {
 	foreach my $name ($line->train_names) {
 		say_train($line->train($name));
 	}
-} elsif ($command) {
-	die "Unknown command \"$command\"\n";
 } else {
-	die "Must pass command\n";
+	die "Unknown command \"$command\"\n";
 }
 exit 0;
 
