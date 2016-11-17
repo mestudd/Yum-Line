@@ -2,6 +2,9 @@ Revision history for Yum-Line
 
 {{$NEXT}}
 
+0.1.2  2016-11-17 15:44:57 EST
+        - Support yum's reposync command for sources
+
 0.1.1  2016-06-14 17:05:48 EDT
         - Properly record dependency on Test::Fatal
 
