@@ -188,11 +188,15 @@ sub promote {
 	my @packages = $results->packages($self->name);
 	my @to = after_incl { $_ eq $stop } $self->stops;
 	my $log = '';
+	my $from = $self->repo($stop)->directory;
 	my $to = $self->repo($to[1])->directory;
 	foreach my $package (@packages) {
 		$log .= $package->move($to);
 	}
 
+	$log .= "$from\n"
+	$log .= `createrepo --update --workers 4 $from`;
+	$log .= "$to\n"
 	$log .= `createrepo --update --workers 4 $to`;
 
 	return $log;
