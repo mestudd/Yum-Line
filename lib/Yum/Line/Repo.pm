@@ -178,6 +178,7 @@ sub sync {
 
 	} elsif ($src =~ s/^reposync://) {
 		my $options = '--arch=' . $self->arch . " --delete --downloadcomps " .
+			"--newest-only ".
 			"--cachedir=$dest/repodata --download_path=$dest --norepopath";
 
 		$cmd = "reposync $options --repoid=$src && mv $dest/repodata/$src/* $dest/repodata";
