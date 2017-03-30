@@ -12,7 +12,7 @@ use strictures 2;
 use namespace::clean;
 
 
-our $VERSION = '0.1.2';
+our $VERSION = '0.1.3';
 
 has base => (
 	is      => 'ro',

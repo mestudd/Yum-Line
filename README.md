@@ -99,7 +99,7 @@ sources for the train.
 
 # AUTHOR
 
-Malcolm Studd &lt;mestudd@gmail.com>
+Malcolm Studd <mestudd@gmail.com>
 
 # COPYRIGHT
 
