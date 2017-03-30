@@ -194,9 +194,9 @@ sub promote {
 		$log .= $package->move($to);
 	}
 
-	$log .= "$from\n"
+	$log .= "$from\n";
 	$log .= `createrepo --update --workers 4 $from`;
-	$log .= "$to\n"
+	$log .= "$to\n";
 	$log .= `createrepo --update --workers 4 $to`;
 
 	return $log;
