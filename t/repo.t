@@ -35,6 +35,9 @@ $repo = Yum::Line::Repo->new(
 	arch   => $arch,
 	rel    => $rel,
 	source => 'local:./t/source/$arch/$rel/$repo',
+	post_update => [
+		'echo $directory $rel $repo $arch'
+	],
 );
 is_deeply [qw(bar foo)], [ $repo->package_names ];
 
@@ -43,6 +46,8 @@ like $repo->sync_log, qr/^sending incremental file list/m;
 like $repo->sync_log, qr/^bar-0.35-1.noarch.rpm/m;
 like $repo->sync_log, qr/^baz-3.4.7-1.noarch.rpm/m;
 like $repo->sync_log, qr/^foo-1.7-2.noarch.rpm/m;
+like $repo->sync_log, qr|^echo $repo_dir $rel $name $arch|m;
+like $repo->sync_log, qr|^$repo_dir $rel $name $arch|m;
 
 
 my $package = $repo->package('foo');

@@ -253,22 +253,10 @@ if (!$command) {
 	stop_action($stop, 'promotable', $command, @ARGV);
 
 } elsif ($command eq 'sync') {
-	foreach my $repo (map $line->upstream($_), $line->upstream_names) {
-		next if ($repo->obsolete);
-
-		say 'Synchronising upstream ', $repo->name;
-		$repo->sync;
-		print $repo->sync_log;
-	}
+	$line->sync(0);
 
 } elsif ($command eq 'sync-obsolete') {
-	foreach my $repo (map $line->upstream($_), $line->upstream_names) {
-		next unless ($repo->obsolete);
-
-		say 'Synchronising upstream ', $repo->name;
-		$repo->sync;
-		print $repo->sync_log;
-	}
+	$line->sync(1);
 
 } elsif ($command eq 'dump') {
 	say 'Config file: ', $line->configfile;

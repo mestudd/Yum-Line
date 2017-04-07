@@ -38,6 +38,11 @@ has _packages => (
 	builder => '_build_packages',
 );
 
+has post_update => (
+	is      => 'ro',
+	default => sub { [] },
+);
+
 has rel => (
 	is => 'ro',
 );
@@ -58,6 +63,25 @@ has sync_log => (
 has sync_status => (
 	is => 'rw',
 );
+
+sub apply_post_updates {
+	my $self = shift;
+
+	my $log = '';
+	foreach (@{ $self->post_update }) {
+		my $cmd = $_;
+		# FIXME: clean this up some
+		$cmd =~ s/\$arch/$self->{arch}/g;
+		$cmd =~ s/\$rel/$self->{rel}/g;
+		$cmd =~ s/\$repo/$self->{name}/g;
+		$cmd =~ s/\$directory/$self->{directory}/g;
+
+		$log .= "$cmd\n";
+		$log .= `$cmd 2>&1`;
+	}
+
+	return $log;
+}
 
 sub _build_packages {
 	my $self = shift;
@@ -102,10 +126,10 @@ sub init {
 	my ($self) = @_;
 
 	my $dir = $self->directory;
-	my $log = `mkdir -vp "$dir"`;
+	my $log = `mkdir -vp "$dir" 2>&1`;
 	die "Could not create $dir\n" if ($? << 8 != 0);
 
-	$log .= `createrepo --update --workers 4 $dir`;
+	$log .= `createrepo --update --workers 4 $dir 2>&1`;
 
 	return $log
 }
@@ -150,6 +174,26 @@ sub restrict {
 	return @{ $self->_restrict // [] };
 }
 
+sub scan_repo {
+	my $self = shift;
+
+	$self->_packages($self->_build_packages);
+}
+
+sub source_subbed {
+	my $self = shift;
+
+	my $src = $self->source;
+	return undef unless ($src);
+
+	# FIXME: clean this up some
+	$src =~ s/\$arch/$self->{arch}/g;
+	$src =~ s/\$rel/$self->{rel}/g;
+	$src =~ s/\$repo/$self->{name}/g;
+
+	return $src;
+}
+
 sub sync {
 	my $self = shift;
 
@@ -157,7 +201,7 @@ sub sync {
 	return 1 unless ($src);
 
 	# FIXME: all this needs cleaning up
-	`mkdir -p $dest/`;
+	`mkdir -p $dest/ 2>&1`;
 	die "Could not create $dest\n" if ($? << 8 != 0); 
 
 	my $cmd;
@@ -188,7 +232,9 @@ sub sync {
 
 	}
 
-	my $log .= `$cmd`;
+	my $log = "$cmd\n";
+	$log .= `$cmd 2>&1`;
+	$log .= $self->apply_post_updates;
 	$self->sync_log($log);
 	$self->sync_status($?);
 
@@ -197,24 +243,16 @@ sub sync {
 	return ($self->sync_status >> 8) == 0;
 }
 
-sub scan_repo {
-	my $self = shift;
+sub update {
+	my ($self, $stop) = @_;
 
-	$self->_packages($self->_build_packages);
-}
+	my $dir = $self->directory;
+	my $log = "createrepo --update --workers 4 $dir\n";
+	$log .= `createrepo --update --workers 4 $dir 2>&1`;
 
-sub source_subbed {
-	my $self = shift;
+	$log .= $self->apply_post_updates;
 
-	my $src = $self->source;
-	return undef unless ($src);
-
-	# FIXME: clean this up some
-	$src =~ s/\$arch/$self->{arch}/g;
-	$src =~ s/\$rel/$self->{rel}/g;
-	$src =~ s/\$repo/$self->{name}/g;
-
-	return $src;
+	return $log;
 }
 
 package Yum::Line::Repo::Entry;
@@ -267,7 +305,7 @@ sub link {
 	my $log = '';
 	foreach my $package ($self->packages) {
 		my $file = $package->file;
-		$log .= `ln -v \"$file\" \"$to\"`;
+		$log .= `ln -v \"$file\" \"$to\" 2>&1`;
 	}
 
 	return $log;
@@ -279,7 +317,7 @@ sub move {
 	my $log = '';
 	foreach my $package ($self->packages) {
 		my $file = $package->file;
-		$log .= `mv -v \"$file\" \"$to\"`;
+		$log .= `mv -v \"$file\" \"$to\" 2>&1`;
 	}
 
 	return $log;
@@ -304,7 +342,7 @@ sub remove {
 	my $log = '';
 	foreach my $package ($self->packages) {
 		my $file = $package->file;
-		$log .= `rm -v \"$file\"`;
+		$log .= `rm -v \"$file\" 2>&1`;
 	}
 
 	return $log;

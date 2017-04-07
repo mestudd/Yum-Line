@@ -1,5 +1,8 @@
 {
 	"directory": "/home/mstudd/tmp/repo",
+	"post_update": [
+		"cp -a $base/$repo /tmp/$repo"
+	],
 	"base": {
 		"name": "base",
 		"arch": "x86_64",

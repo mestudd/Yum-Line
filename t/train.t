@@ -10,13 +10,16 @@ my $arch = 'arm64';
 my @stops = qw(test rc prod);
 my @repos = qw(train-test train-rc train-prod);
 my ($test_dir, $rc_dir, $prod_dir) = (map "$base/$_/$arch", @repos);
-my ($up_dir1, $up_dir2) = ("$base/up-1/$arch", "$base/up-2/$arch");
+my ($up_dir1, $up_dir2) = (map "$base/up-$_/$arch", 1 .. 2);
 my $upstream1 = Yum::Line::Repo->new(directory => $up_dir1);
 my $upstream2 = Yum::Line::Repo->new(directory => $up_dir2);
 my $train = Yum::Line::Train->new(
 	base  => $base,
 	name  => 'train',
 	stops => [ @stops ],
+	post_update => [
+		'echo $directory $rel $repo $arch'
+	],
 	_arch => $arch,
 	_rel  => 7,
 	_upstream => { up1 => $upstream1, up2 => $upstream2 },
@@ -34,6 +37,7 @@ foreach my $stop (@stops) {
 	is $repo->arch, $arch, "$stop repo arch";
 	is $repo->rel, 7, "$stop repo arch";
 	is $repo->directory, "$base/train-$stop/$arch", "$stop repo directory";
+	is $repo->post_update, $train->post_update, "$stop post update commands";
 }
 
 # Test repository initialisation
@@ -101,6 +105,16 @@ $train->cleanable('prod', $result);
 is_deeply [ sort map $_->_compare_name, $result->packages ],
 	[qw( bar-0.45.1-1 baz-1.0-1 )],
 	'clean some from prod';
+
+$result = Yum::Line::ResultSet->new();
+$train->promotable('rc', $result);
+my $log = $train->promote('rc', $result);
+like $log, qr|createrepo --update --workers 4 $rc_dir|;
+like $log, qr|^echo $rc_dir 7 train-rc $arch|m;
+like $log, qr|^$rc_dir 7 train-rc $arch|m;
+like $log, qr|createrepo --update --workers 4 $prod_dir|;
+like $log, qr|^echo $prod_dir 7 train-prod $arch|m;
+like $log, qr|^$prod_dir 7 train-prod $arch|m;
 
 `rm -rf $base`;
 done_testing;

@@ -20,6 +20,11 @@ has name => (
 	is => 'ro',
 );
 
+has post_update => (
+	is      => 'ro',
+	default => sub { [] },
+);
+
 has _rel => (
 	is => 'ro',
 );
@@ -50,6 +55,7 @@ sub _build_repos {
 			base => $self->base,
 			arch => $self->_arch,
 			rel  => $self->_rel,
+			post_update  => $self->post_update,
 		);
 	}
 	return \@repos;
@@ -68,8 +74,7 @@ sub clean {
 
 	foreach my $name (sort keys %repos) {
 		my ($repo) = (grep $name eq $_->name, @{ $self->_repos // [] });
-		my $from = $repo->directory;
-		$log .= `createrepo --update --workers 4 $from`;
+		$log .= $repo->update;
 	}
 
 	return $log;
@@ -125,12 +130,13 @@ sub load {
 
 	my @packages = $results->packages($self->name);
 	my $log = '';
-	my $to = $self->repo($stop)->directory;
+	my $repo = $self->repo($stop);
+	my $to = $repo->directory;
 	foreach my $package (@packages) {
 		$log .= $package->link($to);
 	}
 
-	$log .= `createrepo --update --workers 4 $to`;
+	$log .= $repo->update;
 
 	return $log;
 }
@@ -188,16 +194,15 @@ sub promote {
 	my @packages = $results->packages($self->name);
 	my @to = after_incl { $_ eq $stop } $self->stops;
 	my $log = '';
-	my $from = $self->repo($stop)->directory;
-	my $to = $self->repo($to[1])->directory;
+	my $repo = $self->repo($stop);
+	my $to_repo = $self->repo($to[1]);
+	my $to = $to_repo->directory;
 	foreach my $package (@packages) {
 		$log .= $package->move($to);
 	}
 
-	$log .= "$from\n";
-	$log .= `createrepo --update --workers 4 $from`;
-	$log .= "$to\n";
-	$log .= `createrepo --update --workers 4 $to`;
+	$log .= $repo->update;
+	$log .= $to_repo->update;
 
 	return $log;
 }

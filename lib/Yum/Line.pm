@@ -60,6 +60,7 @@ sub _build_trains {
 		$trains{$t->{name}} = Yum::Line::Train->new(
 			base  => $config->{directory},
 			stops => [ $self->base->stops ],
+			post_update => $config->{post_update} || [],
 			%$t,
 			_upstream => { map +($_, $self->_upstream->{$_}),
 					@{ $t->{upstream} } },
@@ -79,6 +80,7 @@ sub _build_upstream {
 			base => $config->{directory},
 			arch => $self->base->arch,
 			rel  => $self->base->version,
+			post_update => $config->{post_update} || [],
 			%$u,
 		);
 	}
@@ -187,6 +189,18 @@ sub repo_names {
 	}
 
 	return sort $self->upstream_names, @train_repos;
+}
+
+sub sync {
+	my ($self, $obsolete) = @_;
+
+	foreach my $repo (map $self->upstream($_), $self->upstream_names) {
+		next if ($repo->obsolete xor $obsolete);
+
+		say 'Synchronising upstream ', $repo->name;
+		$repo->sync;
+		print $repo->sync_log;
+	}
 }
 
 sub train {
