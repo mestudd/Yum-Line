@@ -1,6 +1,7 @@
 Revision history for Yum-Line
 
 {{$NEXT}}
+        - Add support for post-update commands.
 
 0.1.3  2017-03-30 17:22:08 EDT
         - bugfix: Update metadata in both repos when promoting.
