@@ -106,7 +106,7 @@ sub _execute {
 
 	my $log = '';
 	foreach my $train (map $self->train($_), $self->train_names) {
-		next unless ($results->want_train($train));
+		next unless ($results->want_train($train->name));
 		$log .= $train->$type($stop, $results);
 	}
 
@@ -118,7 +118,7 @@ sub _gather {
 
 	$results = Yum::Line::ResultSet->new() if (!$results);
 	foreach my $train (map $self->train($_), $self->train_names) {
-		next unless ($results->want_train($train));
+		next unless ($results->want_train($train->name));
 		$train->$type($stop, $results);
 	}
 

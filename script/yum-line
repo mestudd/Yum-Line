@@ -299,7 +299,7 @@ sub filtered_results {
 		filters => \@filters,
 		train_filters => [sub {
 			my $train = shift;
-			return !grep $train->name =~ $_, @disable_trains;
+			return !grep $train =~ $_, @disable_trains;
 		}],
 	);
 }
