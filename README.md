@@ -33,6 +33,14 @@ The `directory` configuration value is the absolute path to the filesystem
 location for the repository structure. All the individual repositories are
 placed under this directory.
 
+## post\_update
+
+The `post_update` configuration value is an array of commands to run after an
+update to any repository. It may contain special values, which are replaced for
+the specific repository being updated: `$directory` will be replaced with the
+full path to the repository; the special values for ["base"](#base) are supported as
+well.
+
 ## base
 
 The `base` configuration value is an object describing the upstream OS
