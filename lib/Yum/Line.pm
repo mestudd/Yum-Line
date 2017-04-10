@@ -199,7 +199,7 @@ sub sync {
 
 		say 'Synchronising upstream ', $repo->name;
 		$repo->sync;
-		print $repo->sync_log;
+		print $repo->sync_log // '';
 	}
 }
 
