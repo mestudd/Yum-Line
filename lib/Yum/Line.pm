@@ -43,6 +43,7 @@ sub _build_base {
 	my $config = $self->_config;
 	return Yum::Line::Base->new(
 		base => $config->{directory},
+		post_update => $config->{post_update} || [],
 		%{ $config->{base} },
 	);
 }

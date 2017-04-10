@@ -44,6 +44,7 @@ sub _build_repos {
 			base => $self->base,
 			arch => $self->arch,
 			rel  => $self->version,
+			post_update  => $self->post_update,
 		);
 	}
 
@@ -65,6 +66,7 @@ sub _build_upstream {
 					directory => $self->base ."/$_-$v/$arch",
 					arch => $arch,
 					rel  => $v,
+					post_update  => $self->post_update,
 					source => $stream->{obsolete} ? $self->archive : $self->source,
 					obsolete => $stream->{obsolete},
 				)
