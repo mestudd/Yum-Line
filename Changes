@@ -1,6 +1,8 @@
 Revision history for Yum-Line
 
 {{$NEXT}}
+        - bugfix: post_update not running on base repositories.
+        - bugfix: crash when no sync occurs on repo.
 
 0.2.0  2017-04-07 14:57:38 EDT
         - bugfix: --disabletrain parameter fixed.
